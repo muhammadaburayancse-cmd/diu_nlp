@@ -1,0 +1,2014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From Raw Text to Model Input — NLP Preprocessing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ===== CSS VARIABLES & RESET ===== */
+:root {
+  --bg: #f5f0e8;
+  --bg2: #ede7d9;
+  --surface: #faf6ef;
+  --surface2: #fff9f0;
+  --border: #c8b89a;
+  --ink: #1a1208;
+  --ink2: #4a3f2f;
+  --ink3: #7a6b55;
+  --accent: #c0392b;
+  --accent2: #e67e22;
+  --accent3: #2980b9;
+  --accent4: #27ae60;
+  --code-bg: #2a2318;
+  --code-fg: #e8d5b0;
+  --mono: 'IBM Plex Mono', monospace;
+  --serif: 'Playfair Display', Georgia, serif;
+  --sans: 'DM Sans', sans-serif;
+  --sidebar-w: 220px;
+  --transition: 0.25s ease;
+}
+[data-theme="dark"] {
+  --bg: #0f0d0a;
+  --bg2: #1a1610;
+  --surface: #201c15;
+  --surface2: #2a2318;
+  --border: #4a3f2f;
+  --ink: #f0e8d8;
+  --ink2: #c8b89a;
+  --ink3: #7a6b55;
+  --code-bg: #0a0906;
+  --code-fg: #e8d5b0;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.7;
+  transition: background var(--transition), color var(--transition);
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ===== LAYOUT ===== */
+.layout { display: flex; min-height: 100vh; }
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: var(--sidebar-w);
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  overflow-y: auto;
+  transition: transform var(--transition), background var(--transition);
+}
+.sidebar-header {
+  padding: 1.5rem 1.25rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo {
+  font-family: var(--serif);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+.sidebar-sub {
+  font-size: 0.7rem;
+  color: var(--ink3);
+  margin-top: 0.2rem;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.nav-list { list-style: none; padding: 0.75rem 0; flex: 1; }
+.nav-item a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.8rem;
+  color: var(--ink2);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all var(--transition);
+}
+.nav-item a:hover { color: var(--accent); background: var(--bg2); }
+.nav-item a.active { color: var(--accent); border-left-color: var(--accent); background: var(--bg2); font-weight: 500; }
+.nav-num {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--ink3);
+  min-width: 1.2rem;
+}
+.sidebar-footer {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.theme-toggle {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--ink2);
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-family: var(--sans);
+  transition: all var(--transition);
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.theme-toggle:hover { background: var(--border); }
+.progress-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--bg2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+.hamburger {
+  display: none;
+  position: fixed;
+  top: 1rem; left: 1rem;
+  z-index: 200;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+/* ===== MAIN ===== */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  max-width: 100%;
+}
+
+/* ===== HERO ===== */
+.hero {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 5rem 4rem 4rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%; right: -10%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(192,57,43,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-eyebrow {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.hero-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 24px; height: 1px;
+  background: var(--accent);
+}
+.hero-title {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--ink);
+  max-width: 700px;
+  margin-bottom: 1.25rem;
+}
+.hero-title em {
+  font-style: italic;
+  color: var(--accent);
+}
+.hero-desc {
+  font-size: 1.05rem;
+  color: var(--ink2);
+  max-width: 560px;
+  line-height: 1.8;
+  margin-bottom: 2rem;
+}
+.hero-meta {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.hero-badge {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--ink3);
+  background: var(--bg2);
+}
+
+/* ===== PIPELINE VISUAL ===== */
+.pipeline-visual {
+  padding: 3rem 4rem;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.pipeline-flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 700px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.pipe-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  cursor: pointer;
+  position: relative;
+}
+.pipe-box {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: center;
+  min-width: 100px;
+  transition: all 0.2s;
+  position: relative;
+  z-index: 1;
+}
+.pipe-step:hover .pipe-box,
+.pipe-step.active .pipe-box {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(192,57,43,0.25);
+}
+.pipe-desc {
+  font-size: 0.65rem;
+  color: var(--ink3);
+  margin-top: 0.4rem;
+  text-align: center;
+  font-family: var(--mono);
+  max-width: 90px;
+}
+.pipe-arrow {
+  color: var(--border);
+  font-size: 1.2rem;
+  padding: 0 0.25rem;
+  margin-top: -1.5rem;
+  flex-shrink: 0;
+}
+.pipe-detail {
+  margin: 1.5rem auto 0;
+  max-width: 700px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  display: none;
+}
+.pipe-detail.visible { display: block; animation: fadeSlide 0.2s ease; }
+.pipe-detail h4 {
+  font-family: var(--serif);
+  font-size: 1rem;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+.pipe-detail p { font-size: 0.85rem; color: var(--ink2); }
+.pipe-detail .example {
+  margin-top: 0.75rem;
+  background: var(--code-bg);
+  color: var(--code-fg);
+  padding: 0.6rem 0.9rem;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+}
+
+/* ===== SECTIONS ===== */
+.section {
+  padding: 4rem;
+  border-bottom: 1px solid var(--border);
+}
+.section:nth-child(even) { background: var(--surface); }
+.section-tag {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.5rem;
+}
+.section-title {
+  font-family: var(--serif);
+  font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+.section-lead {
+  font-size: 1rem;
+  color: var(--ink2);
+  max-width: 600px;
+  margin-bottom: 2rem;
+  line-height: 1.8;
+}
+
+/* ===== INTERACTIVE TOKENIZER ===== */
+.tokenizer-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  max-width: 750px;
+}
+.tokenizer-input-area {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.tokenizer-input-area label {
+  display: block;
+  font-size: 0.72rem;
+  font-family: var(--mono);
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.5rem;
+}
+.tokenizer-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--ink);
+  padding: 0.7rem 1rem;
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.tokenizer-input:focus { border-color: var(--accent); }
+.token-mode-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+}
+.token-tab {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.78rem;
+  border: none;
+  background: transparent;
+  color: var(--ink3);
+  cursor: pointer;
+  font-family: var(--sans);
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition);
+}
+.token-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: var(--surface);
+  font-weight: 500;
+}
+.token-output {
+  padding: 1.25rem 1.5rem;
+  min-height: 80px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-content: flex-start;
+}
+.token-chip {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  animation: popIn 0.15s ease both;
+  cursor: default;
+  position: relative;
+}
+.token-chip:hover { border-color: var(--accent); background: var(--surface2); }
+.token-chip .token-id {
+  font-size: 0.58rem;
+  color: var(--ink3);
+  font-family: var(--mono);
+}
+.token-chip.char-tok { border-color: #9b59b6; }
+.token-chip.word-tok { border-color: var(--accent3); }
+.token-chip.sub-tok { border-color: var(--accent4); }
+.token-chip.sent-tok {
+  background: rgba(39,174,96,0.08);
+  border-color: var(--accent4);
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+}
+.token-stats {
+  padding: 0.5rem 1.5rem 0.75rem;
+  font-size: 0.7rem;
+  color: var(--ink3);
+  font-family: var(--mono);
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 1.5rem;
+}
+
+/* ===== STEP PIPELINE DEMO ===== */
+.step-demo {
+  max-width: 750px;
+}
+.step-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  opacity: 0.4;
+  transition: opacity 0.3s;
+}
+.step-row.active { opacity: 1; }
+.step-row.done { opacity: 0.75; }
+.step-num {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--accent);
+  min-width: 2rem;
+  padding-top: 0.85rem;
+}
+.step-label {
+  font-size: 0.72rem;
+  font-family: var(--mono);
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  min-width: 100px;
+  padding-top: 0.9rem;
+}
+.step-value {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.7rem 1rem;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--ink);
+  flex: 1;
+  word-break: break-all;
+}
+.step-run-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-family: var(--sans);
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  display: flex; align-items: center; gap: 0.4rem;
+  transition: background var(--transition), transform 0.1s;
+}
+.step-run-btn:hover { background: #a93226; }
+.step-run-btn:active { transform: scale(0.97); }
+
+/* ===== STEM VS LEMMA ===== */
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  max-width: 750px;
+  margin-bottom: 2rem;
+}
+.compare-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.compare-card-head {
+  padding: 1rem 1.25rem;
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex; align-items: center; gap: 0.6rem;
+}
+.compare-card.stem .compare-card-head { background: rgba(192,57,43,0.07); color: var(--accent); }
+.compare-card.lemma .compare-card-head { background: rgba(39,174,96,0.07); color: var(--accent4); }
+.compare-card-body { padding: 1rem 1.25rem; }
+.compare-card-body ul { list-style: none; }
+.compare-card-body li {
+  font-size: 0.83rem;
+  color: var(--ink2);
+  padding: 0.3rem 0;
+  display: flex; align-items: flex-start; gap: 0.5rem;
+}
+.compare-card-body li::before { content: '→'; color: var(--ink3); flex-shrink: 0; }
+
+.stem-lemma-table {
+  max-width: 600px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+.stem-lemma-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.stem-lemma-table th {
+  background: var(--bg2);
+  padding: 0.7rem 1rem;
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink3);
+}
+.stem-lemma-table td {
+  padding: 0.65rem 1rem;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+}
+.stem-lemma-table tr:hover td { background: var(--bg2); }
+.stem-val { color: var(--accent); }
+.lemma-val { color: var(--accent4); }
+.orig-val { color: var(--ink); }
+
+.decision-block {
+  max-width: 500px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  font-size: 0.85rem;
+}
+.decision-block h4 {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink3);
+  margin-bottom: 0.75rem;
+}
+.decision-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+  align-items: flex-start;
+}
+.decision-if {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--accent3);
+  min-width: 120px;
+  padding-top: 0.1rem;
+}
+.decision-then {
+  font-size: 0.83rem;
+  color: var(--ink);
+}
+.never-badge {
+  background: rgba(192,57,43,0.12);
+  color: var(--accent);
+  border: 1px solid rgba(192,57,43,0.25);
+  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.72rem;
+  font-family: var(--mono);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ===== NLTK vs SPACY ===== */
+.lib-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  max-width: 900px;
+  margin-bottom: 2rem;
+}
+.lib-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.lib-card-head {
+  padding: 0.85rem 1.1rem;
+  font-family: var(--serif);
+  font-size: 1rem;
+  font-weight: 700;
+}
+.lib-card.nltk .lib-card-head { background: rgba(41,128,185,0.08); color: var(--accent3); }
+.lib-card.spacy .lib-card-head { background: rgba(39,174,96,0.08); color: var(--accent4); }
+.lib-card.transformers .lib-card-head { background: rgba(192,57,43,0.08); color: var(--accent); }
+.lib-card-body { padding: 0.9rem 1.1rem; }
+.lib-card-body ul { list-style: none; }
+.lib-card-body li {
+  font-size: 0.78rem;
+  color: var(--ink2);
+  padding: 0.25rem 0;
+  display: flex; align-items: flex-start; gap: 0.4rem;
+}
+.lib-card-body li::before { content: '▪'; color: var(--ink3); flex-shrink: 0; }
+
+.use-table {
+  max-width: 600px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+.use-table table { width: 100%; border-collapse: collapse; }
+.use-table th {
+  background: var(--bg2);
+  padding: 0.65rem 1rem;
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink3);
+}
+.use-table td {
+  padding: 0.6rem 1rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.82rem;
+}
+.use-table tr:hover td { background: var(--bg2); }
+.rec-badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.rec-nltk { background: rgba(41,128,185,0.1); color: var(--accent3); }
+.rec-spacy { background: rgba(39,174,96,0.1); color: var(--accent4); }
+.rec-model { background: rgba(192,57,43,0.1); color: var(--accent); }
+
+.code-block {
+  background: var(--code-bg);
+  color: var(--code-fg);
+  padding: 1.25rem 1.5rem;
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  line-height: 1.7;
+  overflow-x: auto;
+  max-width: 700px;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+.code-block .kw { color: #e88; }
+.code-block .fn { color: #8be; }
+.code-block .str { color: #8d8; }
+.code-block .cm { color: #665; font-style: italic; }
+.code-block .kw2 { color: #fa8; }
+.code-label {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.75rem;
+  font-size: 0.6rem;
+  color: #665;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ===== POS TAGGING ===== */
+.pos-sentence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.pos-word {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: all 0.2s;
+  position: relative;
+}
+.pos-word:hover { transform: translateY(-3px); }
+.pos-text {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--ink);
+}
+.pos-tag {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+}
+.pos-det { background: rgba(142,68,173,0.12); color: #8e44ad; }
+.pos-noun { background: rgba(41,128,185,0.12); color: var(--accent3); }
+.pos-verb { background: rgba(39,174,96,0.12); color: var(--accent4); }
+.pos-aux { background: rgba(230,126,34,0.12); color: var(--accent2); }
+.pos-punct { background: rgba(0,0,0,0.06); color: var(--ink3); }
+.pos-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--surface);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+.pos-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%; left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--ink);
+}
+.pos-word:hover .pos-tooltip { display: block; }
+
+.morph-table {
+  max-width: 650px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 1.5rem;
+}
+.morph-table table { width: 100%; border-collapse: collapse; }
+.morph-table th {
+  background: var(--bg2);
+  padding: 0.6rem 1rem;
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 0.67rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink3);
+}
+.morph-table td {
+  padding: 0.6rem 1rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.82rem;
+  font-family: var(--mono);
+}
+.morph-table tr:hover td { background: var(--bg2); }
+
+/* ===== VECTOR / EMBEDDING ===== */
+.vector-demo {
+  max-width: 720px;
+}
+.vector-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
+.vector-label {
+  min-width: 80px;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink3);
+}
+.vector-arrow-icon {
+  color: var(--border);
+  font-size: 1rem;
+}
+.vector-value {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--ink);
+  background: var(--surface);
+  padding: 0.5rem 0.9rem;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+}
+.vector-value.highlight { border-color: var(--accent); color: var(--accent); }
+.embedding-viz {
+  display: flex;
+  gap: 3px;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+.emb-cell {
+  width: 18px; height: 18px;
+  border-radius: 2px;
+  transition: opacity 0.3s;
+}
+
+/* ===== ADVISOR SECTION ===== */
+.advisor-card {
+  max-width: 720px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.advisor-header {
+  background: var(--bg2);
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.advisor-icon {
+  width: 36px; height: 36px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+.advisor-title {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.advisor-subtitle { font-size: 0.75rem; color: var(--ink3); }
+.advisor-body { padding: 1.5rem; }
+.advisor-form {
+  margin-bottom: 1.25rem;
+}
+.advisor-form label {
+  display: block;
+  font-size: 0.72rem;
+  font-family: var(--mono);
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.5rem;
+}
+.advisor-textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  padding: 0.8rem 1rem;
+  border-radius: 6px;
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 90px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.advisor-textarea:focus { border-color: var(--accent); }
+.advisor-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.65rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: var(--sans);
+  font-weight: 500;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 0.4rem;
+  transition: background var(--transition);
+}
+.advisor-btn:hover { background: #a93226; }
+.advisor-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.advisor-result {
+  display: none;
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+}
+.advisor-result.visible { display: block; animation: fadeSlide 0.3s ease; }
+.advisor-rec-title {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink3);
+  margin-bottom: 0.5rem;
+}
+.advisor-rec-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--ink);
+  line-height: 1.6;
+}
+.advisor-rec-item strong {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 0.35rem;
+}
+.advisor-rec-item.warn { border-left-color: var(--accent2); }
+.advisor-rec-item.warn strong { color: var(--accent2); }
+.advisor-rec-item.good { border-left-color: var(--accent4); }
+.advisor-rec-item.good strong { color: var(--accent4); }
+.advisor-loading {
+  display: none;
+  padding: 1rem 0;
+  text-align: center;
+  color: var(--ink3);
+  font-size: 0.85rem;
+  font-family: var(--mono);
+}
+.advisor-loading.visible { display: block; }
+.loading-dots::after {
+  content: '';
+  animation: dots 1.2s steps(4, end) infinite;
+}
+@keyframes dots {
+  0% { content: ''; }
+  25% { content: '.'; }
+  50% { content: '..'; }
+  75% { content: '...'; }
+}
+
+/* ===== FAILURE MODES ===== */
+.warning-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  max-width: 750px;
+}
+.warning-card {
+  background: rgba(192,57,43,0.04);
+  border: 1px solid rgba(192,57,43,0.2);
+  border-radius: 10px;
+  padding: 1.25rem;
+}
+.warning-card-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.warning-card h4 {
+  font-family: var(--serif);
+  font-size: 1rem;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+.warning-card p {
+  font-size: 0.82rem;
+  color: var(--ink2);
+  line-height: 1.65;
+}
+.warning-card code {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  background: var(--bg2);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  color: var(--ink);
+}
+
+/* ===== GLOSSARY ===== */
+.glossary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.85rem;
+  max-width: 850px;
+}
+.glossary-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.1rem;
+}
+.glossary-term {
+  font-family: var(--serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 0.15rem;
+}
+.glossary-plain {
+  font-size: 0.7rem;
+  color: var(--ink3);
+  font-family: var(--mono);
+  margin-bottom: 0.5rem;
+}
+.glossary-def { font-size: 0.8rem; color: var(--ink2); line-height: 1.6; }
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .hamburger { display: flex; }
+  .section { padding: 2.5rem 1.5rem; }
+  .hero { padding: 4rem 1.5rem 2.5rem; }
+  .pipeline-visual { padding: 2rem 1rem; }
+  .compare-grid { grid-template-columns: 1fr; }
+  .lib-grid { grid-template-columns: 1fr; }
+  .warning-cards { grid-template-columns: 1fr; }
+}
+
+/* ===== SIDEBAR OVERLAY ===== */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 99;
+}
+.sidebar-overlay.visible { display: block; }
+</style>
+</head>
+<body>
+
+<!-- Hamburger for mobile -->
+<button class="hamburger" id="hamburgerBtn" aria-label="Open menu">☰</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">NLP Preprocessing</div>
+    <div class="sidebar-sub">Interactive Guide</div>
+  </div>
+  <nav>
+    <ul class="nav-list">
+      <li class="nav-item"><a href="#hero" class="active"><span class="nav-num">00</span>Overview</a></li>
+      <li class="nav-item"><a href="#sec-pipeline"><span class="nav-num">01</span>The Pipeline</a></li>
+      <li class="nav-item"><a href="#sec-tokens"><span class="nav-num">02</span>Tokenization</a></li>
+      <li class="nav-item"><a href="#sec-usage"><span class="nav-num">03</span>Token Use</a></li>
+      <li class="nav-item"><a href="#sec-stemlem"><span class="nav-num">04</span>Stem vs Lemma</a></li>
+      <li class="nav-item"><a href="#sec-libs"><span class="nav-num">05</span>NLTK vs spaCy</a></li>
+      <li class="nav-item"><a href="#sec-pos"><span class="nav-num">06</span>POS Tagging</a></li>
+      <li class="nav-item"><a href="#sec-vectors"><span class="nav-num">07</span>Vectorization</a></li>
+      <li class="nav-item"><a href="#sec-advisor"><span class="nav-num">08</span>AI Advisor</a></li>
+      <li class="nav-item"><a href="#sec-warnings"><span class="nav-num">09</span>Failure Modes</a></li>
+      <li class="nav-item"><a href="#sec-glossary"><span class="nav-num">10</span>Glossary</a></li>
+    </ul>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+</aside>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main class="main">
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="hero-eyebrow">Phase 5 · Lesson 01</div>
+    <h1 class="hero-title">From Raw Text<br>to <em>Model Input</em></h1>
+    <p class="hero-desc">
+      A model cannot read "The cats were running." It reads integers. This guide walks you through every transformation — tokenization, stemming, lemmatization, and vectorization — with interactive examples at each step.
+    </p>
+    <div class="hero-meta">
+      <span class="hero-badge">🐍 Python</span>
+      <span class="hero-badge">⏱ ~45 min</span>
+      <span class="hero-badge">🔬 NLTK + spaCy</span>
+      <span class="hero-badge">💡 Beginner → Intermediate</span>
+    </div>
+  </section>
+
+  <!-- SECTION 1: PIPELINE -->
+  <section class="section" id="sec-pipeline">
+    <div class="section-tag">Section 01</div>
+    <h2 class="section-title">The Preprocessing Pipeline</h2>
+    <p class="section-lead">Every NLP system follows the same series of transformations. Click each stage to learn what it does and why it matters.</p>
+
+    <div class="pipeline-visual">
+      <div class="pipeline-flow" id="pipelineFlow">
+        <!-- Steps injected by JS -->
+      </div>
+      <div class="pipe-detail" id="pipeDetail"></div>
+    </div>
+
+    <div class="section" style="padding:2rem 0; border:none; background:transparent;">
+      <p class="section-lead" style="margin-bottom:1.25rem;">Try the full pipeline on your own text:</p>
+      <div style="max-width:620px; margin-bottom:1rem;">
+        <input id="pipelineInput" class="tokenizer-input" type="text" value="The cats weren't running at 3pm." placeholder="Enter any English sentence…" style="margin-bottom:0.75rem;">
+        <button class="step-run-btn" onclick="runFullPipeline()">▶ Run Pipeline</button>
+      </div>
+      <div class="step-demo" id="stepDemo">
+        <div class="step-row" id="sr-raw"><div class="step-num">01</div><div class="step-label">Raw Input</div><div class="step-value" id="sv-raw">—</div></div>
+        <div class="step-row" id="sr-clean"><div class="step-num">02</div><div class="step-label">Cleaned</div><div class="step-value" id="sv-clean">—</div></div>
+        <div class="step-row" id="sr-tokens"><div class="step-num">03</div><div class="step-label">Tokens</div><div class="step-value" id="sv-tokens">—</div></div>
+        <div class="step-row" id="sr-lower"><div class="step-num">04</div><div class="step-label">Lowercased</div><div class="step-value" id="sv-lower">—</div></div>
+        <div class="step-row" id="sr-stop"><div class="step-num">05</div><div class="step-label">No Stopwords</div><div class="step-value" id="sv-stop">—</div></div>
+        <div class="step-row" id="sr-stem"><div class="step-num">06</div><div class="step-label">Stems</div><div class="step-value" id="sv-stem">—</div></div>
+        <div class="step-row" id="sr-lemma"><div class="step-num">07</div><div class="step-label">Lemmas</div><div class="step-value" id="sv-lemma">—</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2: TOKENIZATION -->
+  <section class="section" id="sec-tokens">
+    <div class="section-tag">Section 02</div>
+    <h2 class="section-title">How Tokens Are Generated</h2>
+    <p class="section-lead">The right granularity depends on the task. Choose a tokenization strategy and watch your text transform in real time.</p>
+
+    <div class="tokenizer-card" style="max-width:680px; margin-bottom:2rem;">
+      <div class="tokenizer-input-area">
+        <label>Input text</label>
+        <input type="text" class="tokenizer-input" id="tokInput" value="I love machine learning!" placeholder="Type anything…" oninput="runTokenizer()">
+      </div>
+      <div class="token-mode-tabs">
+        <button class="token-tab active" onclick="setTokMode('char', this)">Character</button>
+        <button class="token-tab" onclick="setTokMode('word', this)">Word</button>
+        <button class="token-tab" onclick="setTokMode('subword', this)">Subword (BPE)</button>
+        <button class="token-tab" onclick="setTokMode('sentence', this)">Sentence</button>
+      </div>
+      <div class="token-output" id="tokOutput"></div>
+      <div class="token-stats" id="tokStats"></div>
+    </div>
+
+    <p class="section-lead" style="margin-bottom:1.25rem;">Understanding token IDs, vocabulary, and attention masks:</p>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; max-width:680px;">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1rem 1.1rem;">
+        <div style="font-family:var(--mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink3);margin-bottom:0.5rem;">Vocabulary</div>
+        <p style="font-size:0.82rem;color:var(--ink2);">A fixed mapping of tokens → integer IDs. Every model has its own vocabulary built during training. Out-of-vocabulary tokens become <code style="font-family:var(--mono);font-size:0.78rem;background:var(--bg2);padding:0.1rem 0.3rem;border-radius:3px;">[UNK]</code>.</p>
+      </div>
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1rem 1.1rem;">
+        <div style="font-family:var(--mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink3);margin-bottom:0.5rem;">Attention Mask</div>
+        <p style="font-size:0.82rem;color:var(--ink2);">A binary array: 1 = real token, 0 = padding. When batching sequences of different lengths, shorter ones are padded and masked so the model ignores pad tokens.</p>
+      </div>
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1rem 1.1rem;">
+        <div style="font-family:var(--mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink3);margin-bottom:0.5rem;">Special Tokens</div>
+        <p style="font-size:0.82rem;color:var(--ink2);"><code style="font-family:var(--mono);font-size:0.78rem;background:var(--bg2);padding:0.1rem 0.3rem;border-radius:3px;">[CLS]</code> marks start of sequence; <code style="font-family:var(--mono);font-size:0.78rem;background:var(--bg2);padding:0.1rem 0.3rem;border-radius:3px;">[SEP]</code> separates segments. BERT, GPT, and T5 each use different conventions.</p>
+      </div>
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1rem 1.1rem;">
+        <div style="font-family:var(--mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink3);margin-bottom:0.5rem;">Subword Methods</div>
+        <p style="font-size:0.82rem;color:var(--ink2);"><strong>BPE</strong> (GPT) merges frequent character pairs. <strong>WordPiece</strong> (BERT) maximizes likelihood. <strong>SentencePiece</strong> works on raw bytes — no whitespace needed.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3: USE OF TOKENS -->
+  <section class="section" id="sec-usage">
+    <div class="section-tag">Section 03</div>
+    <h2 class="section-title">Why Models Need Tokens</h2>
+    <p class="section-lead">Neural networks operate on vectors of floating-point numbers. Text is transformed through a series of stages before the model ever "sees" it.</p>
+
+    <div class="vector-demo" style="margin-bottom:2rem;">
+      <div class="vector-row"><div class="vector-label">Raw text</div><div class="vector-arrow-icon">→</div><div class="vector-value">"Cats chase mice"</div></div>
+      <div class="vector-row"><div class="vector-label">Tokens</div><div class="vector-arrow-icon">→</div><div class="vector-value">["cats", "chase", "mice"]</div></div>
+      <div class="vector-row"><div class="vector-label">Token IDs</div><div class="vector-arrow-icon">→</div><div class="vector-value highlight">[15, 42, 78]</div></div>
+      <div class="vector-row"><div class="vector-label">Embedding</div><div class="vector-arrow-icon">→</div><div class="vector-value">3 × 128 matrix (float32)</div></div>
+      <div class="vector-row"><div class="vector-label">Network</div><div class="vector-arrow-icon">→</div><div class="vector-value">transformer layers / attention</div></div>
+      <div class="vector-row"><div class="vector-label">Prediction</div><div class="vector-arrow-icon">→</div><div class="vector-value">class label / next token / score</div></div>
+    </div>
+
+    <div id="embViz" style="margin-bottom:2rem;"></div>
+
+    <p style="font-size:0.82rem;color:var(--ink3);margin-top:0.5rem;font-family:var(--mono);">↑ Simulated 128-dim embedding vectors for "cats" (row 1), "chase" (row 2), "mice" (row 3) — color intensity = activation magnitude.</p>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:0.85rem; max-width:750px; margin-top:1.5rem;">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1rem;">
+        <div style="font-size:1.3rem;margin-bottom:0.4rem;">🏷</div>
+        <div style="font-weight:600;font-size:0.88rem;margin-bottom:0.3rem;">Classification</div>
+        <div style="font-size:0.78rem;color:var(--ink2);">Sentiment analysis, topic detection, spam filtering.</div>
+      </div>
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1rem;">
+        <div style="font-size:1.3rem;margin-bottom:0.4rem;">🌐</div>
+        <div style="font-weight:600;font-size:0.88rem;margin-bottom:0.3rem;">Translation</div>
+        <div style="font-size:0.78rem;color:var(--ink2);">Each token in source language maps to subword units in target language.</div>
+      </div>
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1rem;">
+        <div style="font-size:1.3rem;margin-bottom:0.4rem;">🔍</div>
+        <div style="font-weight:600;font-size:0.88rem;margin-bottom:0.3rem;">Semantic Search</div>
+        <div style="font-size:0.78rem;color:var(--ink2);">Mean-pool token embeddings → sentence vector. Compare via cosine similarity.</div>
+      </div>
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1rem;">
+        <div style="font-size:1.3rem;margin-bottom:0.4rem;">💬</div>
+        <div style="font-weight:600;font-size:0.88rem;margin-bottom:0.3rem;">Chatbots</div>
+        <div style="font-size:0.78rem;color:var(--ink2);">Autoregressive generation: predict next token id, append, repeat.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 4: STEM vs LEMMA -->
+  <section class="section" id="sec-stemlem">
+    <div class="section-tag">Section 04</div>
+    <h2 class="section-title">Stemming vs Lemmatization</h2>
+    <p class="section-lead">Two strategies, one goal: reduce words to their root. They make very different tradeoffs.</p>
+
+    <div class="compare-grid">
+      <div class="compare-card stem">
+        <div class="compare-card-head">✂ Stemming</div>
+        <div class="compare-card-body">
+          <ul>
+            <li>Chops suffixes using rules — no dictionary lookup</li>
+            <li>Fast, aggressive, language-rule-based</li>
+            <li>May produce non-words (<code style="font-family:var(--mono);font-size:0.78rem;">organization → organ</code>)</li>
+            <li>Good for search indexing and rough classification</li>
+            <li>Porter, Snowball, Lancaster are common algorithms</li>
+          </ul>
+        </div>
+      </div>
+      <div class="compare-card lemma">
+        <div class="compare-card-head">📖 Lemmatization</div>
+        <div class="compare-card-body">
+          <ul>
+            <li>Reduces to dictionary (canonical) form using morphology</li>
+            <li>Slower but accurate — produces real words</li>
+            <li>Requires part-of-speech tag to work correctly</li>
+            <li><code style="font-family:var(--mono);font-size:0.78rem;">ran → run</code>, <code style="font-family:var(--mono);font-size:0.78rem;">better → good</code></li>
+            <li>Essential for semantic search, QA, user-visible text</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="stem-lemma-table">
+      <table>
+        <thead><tr><th>Original</th><th>Stem (Porter 1a)</th><th>Lemma</th></tr></thead>
+        <tbody id="stemLemmaTable"></tbody>
+      </table>
+    </div>
+
+    <p style="font-size:0.85rem;color:var(--ink2);max-width:560px;margin-bottom:1.25rem;">Try your own words — type below and watch both transform instantly:</p>
+    <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;">
+      <input type="text" id="stemInput" class="tokenizer-input" style="max-width:280px;" placeholder="e.g. studies, running, better" oninput="stemLemmaDemo()">
+      <select id="posSelect" style="background:var(--bg);border:1px solid var(--border);color:var(--ink);padding:0.6rem 0.9rem;border-radius:6px;font-family:var(--mono);font-size:0.8rem;outline:none;" onchange="stemLemmaDemo()">
+        <option value="VERB">VERB</option>
+        <option value="NOUN" selected>NOUN</option>
+        <option value="ADJ">ADJ</option>
+      </select>
+    </div>
+    <div id="stemLemmaLive" style="font-family:var(--mono);font-size:0.9rem;color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0.85rem 1rem;max-width:400px;min-height:2.5rem;"></div>
+
+    <div class="decision-block" style="margin-top:2rem;">
+      <h4>Decision Guide</h4>
+      <div class="decision-row">
+        <div class="decision-if">IF output visible to users</div>
+        <div class="decision-then"><span class="never-badge">NEVER</span> stem — use lemmatization or nothing</div>
+      </div>
+      <div class="decision-row">
+        <div class="decision-if">IF linguistic meaning matters</div>
+        <div class="decision-then">Lemmatize — but always pass POS tags</div>
+      </div>
+      <div class="decision-row">
+        <div class="decision-if">IF using transformers</div>
+        <div class="decision-then">Skip both — use the model's built-in tokenizer</div>
+      </div>
+      <div class="decision-row">
+        <div class="decision-if">IF search indexing only</div>
+        <div class="decision-then">Stemming is acceptable — faster and simpler</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 5: NLTK vs SPACY -->
+  <section class="section" id="sec-libs">
+    <div class="section-tag">Section 05</div>
+    <h2 class="section-title">NLTK vs spaCy vs Transformers</h2>
+    <p class="section-lead">Three ecosystems, three philosophies. Pick the one that matches your constraints.</p>
+
+    <div class="lib-grid">
+      <div class="lib-card nltk">
+        <div class="lib-card-head">📚 NLTK</div>
+        <div class="lib-card-body">
+          <ul>
+            <li>Best for teaching and research</li>
+            <li>Highly modular — swap any component</li>
+            <li>Extensive corpora and resources</li>
+            <li>Slower at scale, verbose API</li>
+            <li>Penn Treebank POS tags</li>
+          </ul>
+        </div>
+      </div>
+      <div class="lib-card spacy">
+        <div class="lib-card-head">⚡ spaCy</div>
+        <div class="lib-card-body">
+          <ul>
+            <li>Production-grade performance</li>
+            <li>Unified pipeline: tok → POS → lemma → NER</li>
+            <li>60+ language models available</li>
+            <li>Hard to swap individual components</li>
+            <li>Universal Dependencies POS tags</li>
+          </ul>
+        </div>
+      </div>
+      <div class="lib-card transformers">
+        <div class="lib-card-head">🤗 Transformers</div>
+        <div class="lib-card-body">
+          <ul>
+            <li>Use when training/running a transformer</li>
+            <li>Tokenizer tied to each model</li>
+            <li>Subword tokenization (BPE / WordPiece)</li>
+            <li>Classical preprocessing mostly skipped</li>
+            <li>Use <code style="font-family:var(--mono);font-size:0.75rem;">AutoTokenizer</code></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="use-table" style="margin-bottom:2rem;">
+      <table>
+        <thead><tr><th>Situation</th><th>Recommendation</th></tr></thead>
+        <tbody>
+          <tr><td>Teaching / research</td><td><span class="rec-badge rec-nltk">NLTK</span></td></tr>
+          <tr><td>Production system</td><td><span class="rec-badge rec-spacy">spaCy</span></td></tr>
+          <tr><td>Speed at scale</td><td><span class="rec-badge rec-spacy">spaCy</span></td></tr>
+          <tr><td>Multi-language support</td><td><span class="rec-badge rec-spacy">spaCy</span></td></tr>
+          <tr><td>Transformer fine-tuning</td><td><span class="rec-badge rec-model">Model tokenizer</span></td></tr>
+          <tr><td>Swapping components</td><td><span class="rec-badge rec-nltk">NLTK</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code-block" style="max-width:680px;"><div class="code-label">NLTK</div><span class="kw">import</span> nltk
+<span class="kw">from</span> nltk.tokenize <span class="kw">import</span> word_tokenize
+<span class="kw">from</span> nltk.stem <span class="kw">import</span> PorterStemmer, WordNetLemmatizer
+<span class="kw">from</span> nltk <span class="kw">import</span> pos_tag
+
+text = <span class="str">"The cats were running."</span>
+tokens = <span class="fn">word_tokenize</span>(text)        <span class="cm"># handles contractions, Unicode</span>
+stems  = [<span class="fn">PorterStemmer</span>().<span class="fn">stem</span>(t) <span class="kw">for</span> t <span class="kw">in</span> tokens]
+tagged = <span class="fn">pos_tag</span>(tokens)             <span class="cm"># [('cats','NNS'), ('running','VBG'), ...]</span>
+
+<span class="kw">def</span> <span class="fn">to_wn</span>(tag):
+    <span class="kw">if</span> tag.<span class="fn">startswith</span>(<span class="str">'V'</span>): <span class="kw">return</span> <span class="str">'v'</span>
+    <span class="kw">if</span> tag.<span class="fn">startswith</span>(<span class="str">'J'</span>): <span class="kw">return</span> <span class="str">'a'</span>
+    <span class="kw">return</span> <span class="str">'n'</span>
+
+lem = WordNetLemmatizer()
+lemmas = [lem.<span class="fn">lemmatize</span>(t, <span class="fn">to_wn</span>(tag)) <span class="kw">for</span> t, tag <span class="kw">in</span> tagged]</div>
+
+    <div class="code-block" style="max-width:680px;"><div class="code-label">spaCy</div><span class="kw">import</span> spacy
+
+nlp = spacy.<span class="fn">load</span>(<span class="str">"en_core_web_sm"</span>)
+doc = nlp(<span class="str">"The cats were running."</span>)  <span class="cm"># tok + POS + lemma in one call</span>
+
+<span class="kw">for</span> token <span class="kw">in</span> doc:
+    <span class="fn">print</span>(token.text, token.lemma_, token.pos_)
+
+<span class="cm"># The      the     DET</span>
+<span class="cm"># cats     cat     NOUN</span>
+<span class="cm"># were     be      AUX</span>
+<span class="cm"># running  run     VERB</span></div>
+  </section>
+
+  <!-- SECTION 6: POS TAGGING -->
+  <section class="section" id="sec-pos">
+    <div class="section-tag">Section 06</div>
+    <h2 class="section-title">POS Tagging &amp; Morphology</h2>
+    <p class="section-lead">Lemmatization requires grammatical context. Without knowing that "running" is a verb, you can't reliably reduce it to "run". Hover over each word below to see its tag and features.</p>
+
+    <div class="pos-sentence" id="posSentence"></div>
+
+    <div class="morph-table">
+      <table>
+        <thead><tr><th>Word</th><th>POS</th><th>Penn Tag</th><th>Morphological Feature</th><th>Lemma</th></tr></thead>
+        <tbody id="morphTable"></tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:1.5rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;max-width:560px;">
+      <div style="font-family:var(--mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);margin-bottom:0.6rem;">Why POS matters for lemmatization</div>
+      <p style="font-size:0.83rem;color:var(--ink2);line-height:1.7;">
+        The word <em style="font-family:var(--serif);">better</em> has two lemmas:<br>
+        • As <strong>ADJ</strong> → <code style="font-family:var(--mono);font-size:0.78rem;">good</code> (comparative adjective)<br>
+        • As <strong>ADV</strong> → <code style="font-family:var(--mono);font-size:0.78rem;">well</code> (adverb)<br>
+        Without POS, a lemmatizer must guess. If it guesses wrong, downstream models learn from incorrect features.
+      </p>
+    </div>
+  </section>
+
+  <!-- SECTION 7: VECTORS -->
+  <section class="section" id="sec-vectors">
+    <div class="section-tag">Section 07</div>
+    <h2 class="section-title">Preparing Text for ML Models</h2>
+    <p class="section-lead">After linguistic preprocessing, text must become numbers. There are several strategies, each with a different information density.</p>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:1rem; max-width:800px; margin-bottom:2rem;">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1.1rem;">
+        <div style="font-family:var(--mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink3);margin-bottom:0.5rem;">Bag of Words</div>
+        <p style="font-size:0.8rem;color:var(--ink2);">Count of each vocabulary word per document. High-dimensional sparse vector. Loses word order entirely.</p>
+      </div>
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1.1rem;">
+        <div style="font-family:var(--mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink3);margin-bottom:0.5rem;">TF-IDF</div>
+        <p style="font-size:0.8rem;color:var(--ink2);">Term frequency × inverse document frequency. Downweights common words. Still sparse; still no word order.</p>
+      </div>
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1.1rem;">
+        <div style="font-family:var(--mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink3);margin-bottom:0.5rem;">Word2Vec / GloVe</div>
+        <p style="font-size:0.8rem;color:var(--ink2);">Dense 100–300 dim vectors trained on cooccurrence. Captures semantic similarity. One vector per word type.</p>
+      </div>
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1.1rem;">
+        <div style="font-family:var(--mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink3);margin-bottom:0.5rem;">Contextual Embeddings</div>
+        <p style="font-size:0.8rem;color:var(--ink2);">BERT / GPT produce different vectors for the same word in different contexts. "Bank" ≠ "Bank" anymore.</p>
+      </div>
+    </div>
+
+    <p class="section-lead" style="margin-bottom:1rem;">Interactive index builder — enter a mini-corpus:</p>
+    <div style="max-width:650px;">
+      <input type="text" id="corpusInput" class="tokenizer-input" value="Cats chase mice. Dogs chase cats." placeholder="Enter 1–3 sentences…" oninput="buildVocab()" style="margin-bottom:0.75rem;">
+      <div id="vocabOutput" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;font-size:0.82rem;font-family:var(--mono);color:var(--ink);min-height:3rem;"></div>
+    </div>
+  </section>
+
+  <!-- SECTION 8: ADVISOR -->
+  <section class="section" id="sec-advisor">
+    <div class="section-tag">Section 08</div>
+    <h2 class="section-title">NLP Preprocessing Advisor</h2>
+    <p class="section-lead">Describe your task and get a concrete preprocessing recommendation — tokenization strategy, stem vs lemma, exact library calls, and one failure mode to watch for.</p>
+
+    <div class="advisor-card">
+      <div class="advisor-header">
+        <div class="advisor-icon">🧠</div>
+        <div>
+          <div class="advisor-title">preprocessing-advisor</div>
+          <div class="advisor-subtitle">Powered by Claude · context-aware recommendations</div>
+        </div>
+      </div>
+      <div class="advisor-body">
+        <div class="advisor-form">
+          <label>Describe your NLP task</label>
+          <textarea class="advisor-textarea" id="advisorInput" placeholder="e.g. I'm classifying 10k customer support emails into 8 categories. English. Accuracy matters more than latency."></textarea>
+        </div>
+        <button class="advisor-btn" id="advisorBtn" onclick="runAdvisor()">
+          <span>Get Recommendation</span> <span>→</span>
+        </button>
+        <div class="advisor-loading" id="advisorLoading">
+          <span class="loading-dots">Analyzing task</span>
+        </div>
+        <div class="advisor-result" id="advisorResult"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 9: FAILURE MODES -->
+  <section class="section" id="sec-warnings">
+    <div class="section-tag">Section 09</div>
+    <h2 class="section-title">The Two Failure Modes Nobody Warns You About</h2>
+    <p class="section-lead">Most tutorials stop at the algorithms. These two issues will silently destroy production accuracy.</p>
+
+    <div class="warning-cards">
+      <div class="warning-card">
+        <div class="warning-card-icon">📦</div>
+        <h4>Reproducibility Drift</h4>
+        <p>
+          NLTK and spaCy change tokenization behavior between versions. What produced <code>["do","n't"]</code> in spaCy 2.x may produce <code>["don't"]</code> in 3.x. Your model was trained on one distribution. Inference runs on another. Accuracy quietly degrades and nobody knows why.<br><br>
+          <strong>Fix:</strong> Pin library versions in <code>requirements.txt</code>. Write a preprocessing regression test that freezes expected tokenization of 20 sample sentences. Run it on every upgrade.
+        </p>
+      </div>
+      <div class="warning-card">
+        <div class="warning-card-icon">🔀</div>
+        <h4>Train/Inference Mismatch</h4>
+        <p>
+          Train with aggressive preprocessing (lowercase, stopword removal, stemming), deploy on raw user input, watch performance crater. This is the single most common production NLP failure.<br><br>
+          <strong>Fix:</strong> If you preprocess during training, you must run the identical function during inference. Ship preprocessing as a function <em>inside</em> the model package — not as a notebook cell the serving team later rewrites.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 10: GLOSSARY -->
+  <section class="section" id="sec-glossary">
+    <div class="section-tag">Section 10</div>
+    <h2 class="section-title">Key Terms</h2>
+    <p class="section-lead">What people say vs. what it actually means.</p>
+
+    <div class="glossary-grid" id="glossaryGrid"></div>
+  </section>
+
+</main>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+/* =========================================================
+   DATA
+========================================================= */
+const PIPELINE_STEPS = [
+  { id:'raw',      label:'Raw Text',      desc:'Original string',    why:'Starting point — exactly what the user typed or the document contains.', ex:'"The cats weren\'t running at 3pm."' },
+  { id:'clean',    label:'Cleaning',      desc:'Noise removal',      why:'Remove HTML tags, control characters, Unicode noise, URLs, or irrelevant markup before anything else.', ex:'"The cats weren\'t running at 3pm."' },
+  { id:'tok',      label:'Tokenization',  desc:'Split into units',   why:'Determine the atomic units your model will learn from. Wrong tokenization = garbage in.', ex:'["The","cats","weren\'t","running","at","3","pm","."]' },
+  { id:'norm',     label:'Normalization', desc:'Case + unicode',     why:'Unify surface forms: lowercase, strip accents, expand contractions, normalize whitespace.', ex:'["the","cats","were","not","running","at","3","pm","."]' },
+  { id:'stop',     label:'Stopwords',     desc:'Remove noise words', why:'Drop high-frequency, low-information words so models focus on content-bearing tokens.', ex:'["cats","running","3","pm"]' },
+  { id:'stem',     label:'Stemming',      desc:'Strip suffixes',     why:'Merge inflected forms to reduce vocabulary size. "running" → "run". Fast but lossy.', ex:'["cat","run","3","pm"]' },
+  { id:'lemma',    label:'Lemmatization', desc:'Dict. form',         why:'Canonical form using morphology. "ran" → "run", "better" → "good". Needs POS tag.', ex:'["cat","run","3","pm"]' },
+  { id:'vec',      label:'Vectorization', desc:'Integers / floats',  why:'Convert tokens to numeric IDs, then to dense embeddings — what the model actually consumes.', ex:'[15, 42, 3, 78] → 4×128 float matrix' },
+];
+
+const STOPWORDS = new Set(['the','a','an','is','are','was','were','be','been','being','at','in','on','of','to','for','and','or','but','with','this','that','it','its','i','you','he','she','we','they','from','by','as','not','have','has','had','do','did','does','will','would','could','should','may','might','am','into','than','so','if','about','up','out','my','your','his','her','our','their']);
+
+const LEMMA_TABLE = {
+  'running-VERB':'run','ran-VERB':'run','runs-VERB':'run','run-VERB':'run',
+  'cats-NOUN':'cat','cat-NOUN':'cat','mice-NOUN':'mouse','mouse-NOUN':'mouse',
+  'dogs-NOUN':'dog','dog-NOUN':'dog',
+  'were-VERB':'be','was-VERB':'be','is-VERB':'be','are-VERB':'be','been-VERB':'be',
+  'better-ADJ':'good','best-ADJ':'good','good-ADJ':'good',
+  'running-NOUN':'running','studies-NOUN':'study','studies-VERB':'study',
+  'watched-VERB':'watch','watching-VERB':'watch','watches-VERB':'watch',
+  'ponies-NOUN':'pony','pony-NOUN':'pony','caresses-NOUN':'caress','caress-NOUN':'caress',
+};
+
+const STEM_TABLE = [
+  {orig:'studies',  stem:'studi',  lemma:'study',   pos:'NOUN'},
+  {orig:'running',  stem:'run',    lemma:'run',     pos:'VERB'},
+  {orig:'ponies',   stem:'poni',   lemma:'pony',    pos:'NOUN'},
+  {orig:'caresses', stem:'caress', lemma:'caress',  pos:'NOUN'},
+  {orig:'cats',     stem:'cat',    lemma:'cat',     pos:'NOUN'},
+  {orig:'watched',  stem:'watch',  lemma:'watch',   pos:'VERB'},
+  {orig:'better',   stem:'better', lemma:'good',    pos:'ADJ'},
+  {orig:'organization', stem:'organ', lemma:'organization', pos:'NOUN'},
+];
+
+const POS_DATA = [
+  {word:'The',    pos:'DET',  pennTag:'DT',  morph:'Definite article',    lemma:'the',     cssClass:'pos-det'},
+  {word:'cats',   pos:'NOUN', pennTag:'NNS', morph:'Plural noun',         lemma:'cat',     cssClass:'pos-noun'},
+  {word:'are',    pos:'AUX',  pennTag:'VBP', morph:'Present tense be',    lemma:'be',      cssClass:'pos-aux'},
+  {word:'running',pos:'VERB', pennTag:'VBG', morph:'Present participle',  lemma:'run',     cssClass:'pos-verb'},
+  {word:'.',      pos:'PUNCT',pennTag:'.',   morph:'Sentence-final punct',lemma:'.',       cssClass:'pos-punct'},
+];
+
+const GLOSSARY = [
+  {term:'Token',     plain:'A word',          def:'Whatever unit the model consumes. Can be a word, subword, character, or byte depending on the system.'},
+  {term:'Stem',      plain:'Root of a word',  def:'Result of rule-based suffix stripping. Not always a real word. Faster than lemmatization but lossy.'},
+  {term:'Lemma',     plain:'Dictionary form', def:'The form you would look up in a dictionary. Requires grammatical (POS) context to compute correctly.'},
+  {term:'POS tag',   plain:'Part of speech',  def:'Grammatical category: NOUN, VERB, ADJ, ADV, DET… Needed to lemmatize accurately.'},
+  {term:'Morphology',plain:'Word shape rules',def:'How a word changes form based on tense, number, case. Lemmatization depends on morphological analysis.'},
+  {term:'Vocabulary',plain:'Known words',     def:'Fixed set of tokens a model recognizes. Tokens outside the vocab become [UNK].'},
+  {term:'Embedding', plain:'Dense vector',    def:'A learned floating-point representation of a token in N-dimensional space. Similar tokens cluster together.'},
+  {term:'Stopword',  plain:'Common filler',   def:'High-frequency, low-information word (the, is, at, in…). Often removed to reduce noise in classical NLP.'},
+  {term:'BPE',       plain:'Subword method',  def:'Byte Pair Encoding. Merges the most frequent character pairs iteratively to build a subword vocabulary.'},
+  {term:'Attention mask', plain:'0/1 array', def:'Binary flag per token: 1 = real, 0 = padding. Tells the model which positions to attend to.'},
+];
+
+/* =========================================================
+   HELPERS
+========================================================= */
+function wordTokenize(text) {
+  return text.match(/[A-Za-z]+(?:'[A-Za-z]+)?|[0-9]+|[^\sA-Za-z0-9]/g) || [];
+}
+
+function stem1a(w) {
+  w = w.toLowerCase();
+  if (w.endsWith('sses')) return w.slice(0,-2);
+  if (w.endsWith('ies'))  return w.slice(0,-2);
+  if (w.endsWith('ss'))   return w;
+  if (w.endsWith('s') && w.length > 1) return w.slice(0,-1);
+  return w;
+}
+
+function lemmatize(word, pos) {
+  const key = word.toLowerCase() + '-' + pos;
+  if (LEMMA_TABLE[key]) return LEMMA_TABLE[key];
+  const lw = word.toLowerCase();
+  if (pos === 'VERB' && lw.endsWith('ing') && lw.length > 4) return lw.slice(0,-3);
+  if (pos === 'VERB' && lw.endsWith('ed')  && lw.length > 3) return lw.slice(0,-2);
+  if (pos === 'NOUN' && lw.endsWith('s')   && lw.length > 2) return lw.slice(0,-1);
+  return lw;
+}
+
+function guessPos(word) {
+  const verbs = new Set(['running','ran','runs','run','were','was','is','are','watched','watching','watches','been','be','studies','study']);
+  const adjs  = new Set(['better','best','good','great','small','big','fast','slow']);
+  const lw = word.toLowerCase();
+  if (verbs.has(lw)) return 'VERB';
+  if (adjs.has(lw))  return 'ADJ';
+  return 'NOUN';
+}
+
+function rand(min, max) { return Math.random() * (max - min) + min; }
+
+/* =========================================================
+   THEME
+========================================================= */
+let dark = false;
+document.getElementById('themeToggle').onclick = function() {
+  dark = !dark;
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : '');
+  this.textContent = dark ? '☀ Light' : '🌙 Dark';
+};
+
+/* =========================================================
+   SIDEBAR / NAV / PROGRESS
+========================================================= */
+const hamburger = document.getElementById('hamburgerBtn');
+const sidebar   = document.getElementById('sidebar');
+const overlay   = document.getElementById('sidebarOverlay');
+
+hamburger.onclick = () => { sidebar.classList.toggle('open'); overlay.classList.toggle('visible'); };
+overlay.onclick   = () => { sidebar.classList.remove('open'); overlay.classList.remove('visible'); };
+
+window.addEventListener('scroll', () => {
+  const scrolled = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+  document.getElementById('progressFill').style.width = (scrolled * 100) + '%';
+
+  const sections = ['hero','sec-pipeline','sec-tokens','sec-usage','sec-stemlem','sec-libs','sec-pos','sec-vectors','sec-advisor','sec-warnings','sec-glossary'];
+  const navLinks = document.querySelectorAll('.nav-item a');
+  sections.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.top <= 120 && rect.bottom > 120) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      if (navLinks[i]) navLinks[i].classList.add('active');
+    }
+  });
+});
+
+/* =========================================================
+   PIPELINE FLOW
+========================================================= */
+const flow = document.getElementById('pipelineFlow');
+PIPELINE_STEPS.forEach((step, i) => {
+  if (i > 0) {
+    const arrow = document.createElement('div');
+    arrow.className = 'pipe-arrow';
+    arrow.textContent = '→';
+    flow.appendChild(arrow);
+  }
+  const el = document.createElement('div');
+  el.className = 'pipe-step';
+  el.dataset.id = step.id;
+  el.innerHTML = `<div class="pipe-box">${step.label}</div><div class="pipe-desc">${step.desc}</div>`;
+  el.onclick = () => showPipeDetail(step, el);
+  flow.appendChild(el);
+});
+
+function showPipeDetail(step, el) {
+  document.querySelectorAll('.pipe-step').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  const detail = document.getElementById('pipeDetail');
+  detail.innerHTML = `<h4>${step.label}</h4><p>${step.why}</p><div class="example">${step.ex}</div>`;
+  detail.classList.add('visible');
+}
+
+/* =========================================================
+   FULL PIPELINE DEMO
+========================================================= */
+function runFullPipeline() {
+  const text = document.getElementById('pipelineInput').value.trim();
+  if (!text) return;
+
+  const steps = [
+    {id:'raw',   fn: t => t},
+    {id:'clean', fn: t => t.replace(/[^\x00-\x7F]/g,' ').replace(/\s+/g,' ').trim()},
+    {id:'tokens',fn: t => {
+      const toks = wordTokenize(t);
+      return JSON.stringify(toks);
+    }},
+    {id:'lower', fn: t => {
+      const toks = wordTokenize(t).map(w => w.toLowerCase());
+      return JSON.stringify(toks);
+    }},
+    {id:'stop',  fn: t => {
+      const toks = wordTokenize(t).map(w=>w.toLowerCase()).filter(w => !STOPWORDS.has(w));
+      return JSON.stringify(toks);
+    }},
+    {id:'stem',  fn: t => {
+      const toks = wordTokenize(t).map(w=>w.toLowerCase()).filter(w => !STOPWORDS.has(w)).map(stem1a);
+      return JSON.stringify(toks);
+    }},
+    {id:'lemma', fn: t => {
+      const toks = wordTokenize(t).map(w=>w.toLowerCase()).filter(w => !STOPWORDS.has(w));
+      const lemmas = toks.map(w => lemmatize(w, guessPos(w)));
+      return JSON.stringify(lemmas);
+    }},
+  ];
+
+  const rows  = document.querySelectorAll('.step-row');
+  rows.forEach(r => { r.classList.remove('active','done'); });
+
+  steps.forEach((step, i) => {
+    setTimeout(() => {
+      rows.forEach(r => r.classList.remove('active'));
+      if (i > 0) document.getElementById('sr-' + steps[i-1].id.replace(/\d+/,'')).classList.add('done');
+      const row = document.getElementById('sr-' + step.id);
+      const val = document.getElementById('sv-' + step.id);
+      if (row && val) {
+        row.classList.add('active');
+        val.textContent = step.fn(text);
+      }
+    }, i * 350);
+  });
+}
+
+/* =========================================================
+   TOKENIZER
+========================================================= */
+let tokMode = 'char';
+
+function setTokMode(mode, btn) {
+  tokMode = mode;
+  document.querySelectorAll('.token-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  runTokenizer();
+}
+
+function runTokenizer() {
+  const text = document.getElementById('tokInput').value;
+  const out   = document.getElementById('tokOutput');
+  const stats = document.getElementById('tokStats');
+  out.innerHTML = '';
+
+  let tokens = [];
+  let cssClass = '';
+  let showId = true;
+
+  if (tokMode === 'char') {
+    tokens = text.split('');
+    cssClass = 'char-tok';
+  } else if (tokMode === 'word') {
+    tokens = wordTokenize(text);
+    cssClass = 'word-tok';
+  } else if (tokMode === 'subword') {
+    // Simple BPE simulation
+    const words = text.replace(/[^a-zA-Z0-9\s]/g,'').toLowerCase().split(/\s+/).filter(Boolean);
+    const common = ['ing','tion','est','er','ed','re','un','pro','in','out'];
+    words.forEach(w => {
+      let found = false;
+      for (const sfx of common) {
+        if (w.endsWith(sfx) && w.length > sfx.length + 1) {
+          tokens.push(w.slice(0, w.length - sfx.length));
+          tokens.push('##'+sfx);
+          found = true; break;
+        }
+      }
+      if (!found) tokens.push(w);
+    });
+    cssClass = 'sub-tok';
+  } else if (tokMode === 'sentence') {
+    tokens = text.split(/(?<=[.!?])\s+/).filter(Boolean);
+    cssClass = 'sent-tok';
+    showId = false;
+  }
+
+  tokens.forEach((tok, i) => {
+    const chip = document.createElement('div');
+    chip.className = `token-chip ${cssClass}`;
+    chip.style.animationDelay = (i * 30) + 'ms';
+    chip.innerHTML = `<span>${tok === ' ' ? '·' : tok.replace(/</g,'&lt;')}</span>`;
+    if (showId) chip.innerHTML += `<span class="token-id">${100 + i * 7}</span>`;
+    out.appendChild(chip);
+  });
+
+  stats.innerHTML = `<span>tokens: ${tokens.length}</span><span>vocab_size (approx): ${new Set(tokens.map(t=>t.toLowerCase())).size}</span><span>avg_len: ${tokens.length ? (tokens.reduce((a,t)=>a+t.length,0)/tokens.length).toFixed(1) : 0}</span>`;
+}
+
+/* =========================================================
+   STEM/LEMMA TABLE
+========================================================= */
+const tbody = document.getElementById('stemLemmaTable');
+STEM_TABLE.forEach(row => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td class="orig-val">${row.orig}</td><td class="stem-val">${row.stem}</td><td class="lemma-val">${row.lemma}</td>`;
+  tbody.appendChild(tr);
+});
+
+function stemLemmaDemo() {
+  const raw = document.getElementById('stemInput').value.trim();
+  const pos = document.getElementById('posSelect').value;
+  const out = document.getElementById('stemLemmaLive');
+  if (!raw) { out.textContent = ''; return; }
+  const words = raw.split(/[\s,]+/).filter(Boolean);
+  const parts = words.map(w => {
+    const s = stem1a(w);
+    const l = lemmatize(w, pos);
+    return `${w} → stem: <span style="color:var(--accent)">${s}</span>  lemma: <span style="color:var(--accent4)">${l}</span>`;
+  });
+  out.innerHTML = parts.join('<br>');
+}
+
+/* =========================================================
+   POS SENTENCE
+========================================================= */
+const posSentEl = document.getElementById('posSentence');
+POS_DATA.forEach(d => {
+  const w = document.createElement('div');
+  w.className = 'pos-word';
+  w.innerHTML = `
+    <span class="pos-text">${d.word}</span>
+    <span class="pos-tag ${d.cssClass}">${d.pos}</span>
+    <div class="pos-tooltip">${d.morph} · lemma: ${d.lemma}</div>
+  `;
+  posSentEl.appendChild(w);
+});
+
+const morphTbody = document.getElementById('morphTable');
+POS_DATA.forEach(d => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td style="font-family:var(--serif);font-style:italic">${d.word}</td><td><span class="pos-tag ${d.cssClass}" style="font-size:0.7rem;">${d.pos}</span></td><td>${d.pennTag}</td><td>${d.morph}</td><td style="color:var(--accent4)">${d.lemma}</td>`;
+  morphTbody.appendChild(tr);
+});
+
+/* =========================================================
+   EMBEDDING VISUALIZATION
+========================================================= */
+(function buildEmbViz() {
+  const container = document.getElementById('embViz');
+  const words = ['cats','chase','mice'];
+  const colors = ['#c0392b','#2980b9','#27ae60'];
+  words.forEach((w, wi) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'margin-bottom:6px;display:flex;align-items:center;gap:8px;';
+    const lbl = document.createElement('span');
+    lbl.style.cssText = 'font-family:var(--mono);font-size:0.72rem;color:var(--ink3);min-width:50px;';
+    lbl.textContent = w;
+    row.appendChild(lbl);
+    const cells = document.createElement('div');
+    cells.className = 'embedding-viz';
+    for (let i = 0; i < 64; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'emb-cell';
+      const v = Math.max(0, Math.min(1, rand(0, 1)));
+      const alpha = 0.15 + v * 0.85;
+      cell.style.background = colors[wi];
+      cell.style.opacity = alpha;
+      cell.title = `dim ${i}: ${v.toFixed(3)}`;
+      cells.appendChild(cell);
+    }
+    row.appendChild(cells);
+    container.appendChild(row);
+  });
+})();
+
+/* =========================================================
+   VOCAB BUILDER
+========================================================= */
+function buildVocab() {
+  const text  = document.getElementById('corpusInput').value;
+  const out   = document.getElementById('vocabOutput');
+  const toks  = wordTokenize(text).map(w => w.toLowerCase()).filter(w => /[a-z]/.test(w));
+  const vocab = {};
+  toks.forEach(t => { if (!vocab[t]) vocab[t] = Object.keys(vocab).length; });
+  const vocabStr = Object.entries(vocab).map(([w,i]) => `"${w}":${i}`).join(', ');
+  const indices  = toks.map(t => vocab[t]);
+  out.innerHTML = `<span style="color:var(--ink3)">vocab:</span> {${vocabStr}}<br><span style="color:var(--ink3)">indices:</span> [${indices.join(', ')}]`;
+}
+
+/* =========================================================
+   GLOSSARY
+========================================================= */
+const glossGrid = document.getElementById('glossaryGrid');
+GLOSSARY.forEach(g => {
+  const el = document.createElement('div');
+  el.className = 'glossary-item';
+  el.innerHTML = `<div class="glossary-term">${g.term}</div><div class="glossary-plain">"${g.plain}"</div><div class="glossary-def">${g.def}</div>`;
+  glossGrid.appendChild(el);
+});
+
+/* =========================================================
+   AI ADVISOR (Claude API)
+========================================================= */
+async function runAdvisor() {
+  const input = document.getElementById('advisorInput').value.trim();
+  if (!input) { alert('Please describe your NLP task first.'); return; }
+
+  const btn     = document.getElementById('advisorBtn');
+  const loading = document.getElementById('advisorLoading');
+  const result  = document.getElementById('advisorResult');
+
+  btn.disabled = true;
+  loading.classList.add('visible');
+  result.classList.remove('visible');
+  result.innerHTML = '';
+
+  const systemPrompt = `You are an expert NLP preprocessing advisor. Given a task description, you respond with a structured JSON recommendation — no prose, no preamble, no markdown fences.
+
+Return exactly this JSON shape:
+{
+  "tokenization": { "choice": "...", "reason": "..." },
+  "normalization": { "choice": "...", "reason": "..." },
+  "stemLemma": { "choice": "stem|lemmatize|both|neither", "reason": "...", "libCall": "..." },
+  "failureMode": "...",
+  "warning": "..." 
+}
+
+Rules you must follow:
+- Never recommend stemming for user-visible text
+- Never recommend lemmatization without POS tags
+- If non-English is detected, recommend language-specific spaCy or Stanza
+- If transformers are involved, recommend the model's own tokenizer and skip classical preprocessing
+- Keep each value concise (1-2 sentences max)
+- warning field: if the task has a common pitfall, describe it briefly; otherwise empty string`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: input }]
+      })
+    });
+
+    const data = await resp.json();
+    const raw  = data.content?.find(b => b.type === 'text')?.text || '{}';
+    let rec;
+    try { rec = JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+    catch { rec = null; }
+
+    if (!rec) throw new Error('Could not parse response');
+
+    const items = [
+      { cls: 'good', label: '01 · Tokenization', val: `<strong>${rec.tokenization.choice}</strong><br>${rec.tokenization.reason}` },
+      { cls: 'good', label: '02 · Normalization', val: `<strong>${rec.normalization.choice}</strong><br>${rec.normalization.reason}` },
+      { cls: rec.stemLemma.choice === 'stem' ? 'warn' : 'good', label: '03 · Stem vs Lemma', val: `<strong>${rec.stemLemma.choice.toUpperCase()}</strong><br>${rec.stemLemma.reason}<br><code style="font-family:var(--mono);font-size:0.78rem;background:var(--bg2);padding:0.1rem 0.35rem;border-radius:3px;">${rec.stemLemma.libCall}</code>` },
+      { cls: 'warn', label: '04 · Failure Mode to Test', val: rec.failureMode },
+    ];
+
+    if (rec.warning) items.push({ cls: '', label: '⚠ Watch Out', val: rec.warning });
+
+    result.innerHTML = '<div class="advisor-rec-title">Recommendation</div>' +
+      items.map(it => `<div class="advisor-rec-item ${it.cls}"><strong>${it.label}</strong>${it.val}</div>`).join('');
+    result.classList.add('visible');
+
+  } catch(err) {
+    result.innerHTML = `<div class="advisor-rec-item warn"><strong>Error</strong>${err.message}. Please check your connection and try again.</div>`;
+    result.classList.add('visible');
+  } finally {
+    btn.disabled = false;
+    loading.classList.remove('visible');
+  }
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+runTokenizer();
+buildVocab();
+runFullPipeline();
+stemLemmaDemo();
+</script>
+</body>
+</html>

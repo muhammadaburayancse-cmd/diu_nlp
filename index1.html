@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LDA Math — Exam Walkthrough</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #151820;
+    --surface2: #1c2030;
+    --border: #272c3d;
+    --border2: #323850;
+    --text: #e2e6f0;
+    --muted: #7a82a0;
+    --dim: #4a5068;
+    --nature: #34d399;
+    --nature-bg: #0d2d22;
+    --nature-border: #1a4a38;
+    --space: #60a5fa;
+    --space-bg: #0d1e36;
+    --space-border: #1a3360;
+    --ocean: #a78bfa;
+    --ocean-bg: #1a1030;
+    --ocean-border: #2d1e55;
+    --accent: #f59e0b;
+    --accent-bg: #2a1f08;
+    --red: #f87171;
+    --red-bg: #2d1010;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 2rem 2rem 1.5rem;
+    background: var(--surface);
+  }
+  .header-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: .5rem;
+  }
+  header h1 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: -.02em;
+    line-height: 1.2;
+    margin-bottom: .4rem;
+  }
+  header p {
+    color: var(--muted);
+    font-size: 14px;
+    max-width: 620px;
+  }
+
+  /* ── Layout ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: calc(100vh - 90px);
+  }
+
+  /* ── Sidebar ── */
+  aside {
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    padding: 1.5rem 0;
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 90px);
+    overflow-y: auto;
+  }
+  .aside-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    color: var(--dim);
+    text-transform: uppercase;
+    padding: 0 1.25rem;
+    margin-bottom: .75rem;
+  }
+  .step-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: .6rem 1.25rem;
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--muted);
+    text-align: left;
+    border-left: 2px solid transparent;
+    transition: all .15s;
+  }
+  .step-nav-btn:hover { color: var(--text); background: var(--surface2); }
+  .step-nav-btn.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: var(--accent-bg);
+  }
+  .step-nav-btn .num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dim);
+    min-width: 18px;
+  }
+  .step-nav-btn.active .num { color: var(--accent); }
+  .step-nav-btn .label { flex: 1; line-height: 1.3; }
+
+  /* ── Main content ── */
+  main {
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  .step-panel {
+    display: none;
+    padding: 2rem;
+    max-width: 860px;
+  }
+  .step-panel.active { display: block; }
+
+  .step-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .step-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    border: 1px solid #4a3010;
+    white-space: nowrap;
+    margin-top: 4px;
+  }
+  .step-title { font-size: 1.3rem; font-weight: 600; letter-spacing: -.02em; }
+  .step-sub { color: var(--muted); font-size: 14px; margin-top: .3rem; }
+
+  /* ── Sections within a step ── */
+  .section {
+    margin-bottom: 1.75rem;
+  }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .1em;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: .6rem;
+  }
+
+  /* ── Exam question box ── */
+  .exam-box {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 1.25rem 1.5rem;
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  .exam-box strong { color: var(--accent); }
+
+  /* ── Setup grid ── */
+  .setup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  .setup-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+  }
+  .setup-card h4 {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: .6rem;
+    letter-spacing: .05em;
+  }
+  .pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    margin: 2px;
+    font-family: var(--mono);
+  }
+  .pill.nature  { background: var(--nature-bg);  color: var(--nature);  border: 1px solid var(--nature-border); }
+  .pill.space   { background: var(--space-bg);   color: var(--space);   border: 1px solid var(--space-border); }
+  .pill.ocean   { background: var(--ocean-bg);   color: var(--ocean);   border: 1px solid var(--ocean-border); }
+  .pill.neutral { background: var(--surface);    color: var(--muted);   border: 1px solid var(--border); }
+  .pill.accent  { background: var(--accent-bg);  color: var(--accent);  border: 1px solid #4a3010; }
+
+  /* ── Matrix / table ── */
+  .matrix-wrap { overflow-x: auto; }
+  table.matrix {
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 13px;
+    width: 100%;
+  }
+  table.matrix th {
+    background: var(--surface2);
+    color: var(--muted);
+    font-weight: 500;
+    padding: .5rem .75rem;
+    border: 1px solid var(--border);
+    text-align: center;
+    font-size: 12px;
+  }
+  table.matrix td {
+    padding: .45rem .75rem;
+    border: 1px solid var(--border);
+    text-align: center;
+    color: var(--text);
+  }
+  table.matrix tr:nth-child(even) td { background: var(--surface2); }
+  table.matrix td.nature { color: var(--nature); background: var(--nature-bg); }
+  table.matrix td.space  { color: var(--space);  background: var(--space-bg); }
+  table.matrix td.ocean  { color: var(--ocean);  background: var(--ocean-bg); }
+  table.matrix td.hl     { background: var(--accent-bg); color: var(--accent); border-color: #4a3010; }
+  table.matrix td.hl-red { background: var(--red-bg); color: var(--red); }
+  table.matrix th.nature { background: var(--nature-bg); color: var(--nature); }
+  table.matrix th.space  { background: var(--space-bg);  color: var(--space); }
+  table.matrix th.ocean  { background: var(--ocean-bg);  color: var(--ocean); }
+
+  /* ── Math formula display ── */
+  .formula-block {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin: .75rem 0;
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 2;
+    overflow-x: auto;
+  }
+  .formula-block .eq { color: var(--text); }
+  .formula-block .label-f { color: var(--muted); font-size: 12px; display: block; margin-bottom: .25rem; }
+  .f-nature { color: var(--nature); }
+  .f-space  { color: var(--space); }
+  .f-ocean  { color: var(--ocean); }
+  .f-accent { color: var(--accent); }
+  .f-red    { color: var(--red); }
+
+  /* ── Callout box ── */
+  .callout {
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    font-size: 13.5px;
+    line-height: 1.7;
+    margin: .75rem 0;
+  }
+  .callout.why  { background: var(--accent-bg);  border: 1px solid #4a3010; }
+  .callout.note { background: var(--surface2);    border: 1px solid var(--border2); }
+  .callout.good { background: var(--nature-bg);   border: 1px solid var(--nature-border); }
+  .callout.info { background: var(--space-bg);    border: 1px solid var(--space-border); }
+  .callout-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: .4rem;
+  }
+  .callout.why  .callout-title { color: var(--accent); }
+  .callout.note .callout-title { color: var(--muted); }
+  .callout.good .callout-title { color: var(--nature); }
+  .callout.info .callout-title { color: var(--space); }
+
+  /* ── Word assignment visual ── */
+  .assign-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: .6rem 1rem;
+    border-radius: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    margin-bottom: .5rem;
+    font-size: 13px;
+  }
+  .assign-row .word-tag {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    min-width: 64px;
+    color: var(--text);
+  }
+  .assign-row .arrow { color: var(--dim); }
+  .assign-row .topic-tag {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 4px;
+  }
+  .topic-tag.nature { background: var(--nature-bg); color: var(--nature); border: 1px solid var(--nature-border); }
+  .topic-tag.space  { background: var(--space-bg);  color: var(--space);  border: 1px solid var(--space-border); }
+  .topic-tag.ocean  { background: var(--ocean-bg);  color: var(--ocean);  border: 1px solid var(--ocean-border); }
+  .topic-tag.random { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+  .assign-row .reason {
+    flex: 1;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .assign-row.highlight { border-color: var(--accent); background: var(--accent-bg); }
+
+  /* ── Step arrows / flow ── */
+  .flow-eq {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: .75rem 1rem;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    margin: .5rem 0;
+    font-family: var(--mono);
+    font-size: 13px;
+    flex-wrap: wrap;
+  }
+  .flow-eq .part { padding: 3px 10px; border-radius: 4px; }
+  .flow-eq .mult { color: var(--dim); }
+  .flow-eq .eq-sign { color: var(--muted); }
+  .flow-eq .result { color: var(--accent); font-weight: 600; }
+
+  /* ── Nav buttons ── */
+  .nav-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .nav-btn {
+    padding: .6rem 1.25rem;
+    border-radius: 6px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text);
+    transition: all .15s;
+  }
+  .nav-btn:hover { background: var(--surface); border-color: var(--muted); }
+  .nav-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+  }
+  .nav-btn.primary:hover { opacity: .9; }
+  .nav-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  /* ── Progress bar ── */
+  .progress-bar {
+    height: 2px;
+    background: var(--border);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width .3s ease;
+  }
+
+  .mono { font-family: var(--mono); }
+  hr.divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+
+  .final-answer {
+    background: linear-gradient(135deg, var(--nature-bg), var(--space-bg));
+    border: 1px solid var(--nature-border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+  }
+  .final-answer h3 {
+    color: var(--nature);
+    font-size: 14px;
+    font-family: var(--mono);
+    margin-bottom: .75rem;
+    letter-spacing: .05em;
+  }
+  .final-row {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    margin-bottom: .5rem;
+    font-size: 13px;
+  }
+  .final-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 120px;
+  }
+  .final-val { color: var(--text); font-family: var(--mono); }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  @media (max-width: 640px) {
+    .layout { grid-template-columns: 1fr; }
+    aside { display: none; }
+    .setup-grid { grid-template-columns: 1fr; }
+    .step-panel { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+
+<header>
+  <div class="header-tag">Exam Prep · Math Walkthrough</div>
+  <h1>LDA — Gibbs Sampling, Step by Step</h1>
+  <p>A worked exam question with full probability calculations. Every number explained.</p>
+</header>
+
+<div class="layout">
+<aside>
+  <div class="aside-label">Steps</div>
+  <button class="step-nav-btn active" onclick="go(0)"><span class="num">Q</span><span class="label">The Exam Question</span></button>
+  <button class="step-nav-btn" onclick="go(1)"><span class="num">1</span><span class="label">Setup & Notation</span></button>
+  <button class="step-nav-btn" onclick="go(2)"><span class="num">2</span><span class="label">Random Initialization</span></button>
+  <button class="step-nav-btn" onclick="go(3)"><span class="num">3</span><span class="label">The Core Formula</span></button>
+  <button class="step-nav-btn" onclick="go(4)"><span class="num">4</span><span class="label">Iteration 1 — word "fish"</span></button>
+  <button class="step-nav-btn" onclick="go(5)"><span class="num">5</span><span class="label">Iteration 1 — word "star"</span></button>
+  <button class="step-nav-btn" onclick="go(6)"><span class="num">6</span><span class="label">Iteration 1 — word "lion"</span></button>
+  <button class="step-nav-btn" onclick="go(7)"><span class="num">7</span><span class="label">After Many Iterations</span></button>
+  <button class="step-nav-btn" onclick="go(8)"><span class="num">✓</span><span class="label">Final Answer</span></button>
+</aside>
+
+<main>
+
+<!-- ════ STEP 0: EXAM QUESTION ════ -->
+<div class="step-panel active" id="panel-0">
+  <div class="step-header">
+    <div>
+      <div class="step-title">The Exam Question</div>
+      <div class="step-sub">Read this carefully. We will solve every part with math.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Question</div>
+    <div class="exam-box">
+      <p>You are given <strong>3 short documents</strong> and asked to run <strong>LDA with K = 2 topics</strong> using Gibbs Sampling.</p>
+      <br>
+      <p><strong>Document 1 (D1):</strong> &nbsp;"fish lion star"</p>
+      <p><strong>Document 2 (D2):</strong> &nbsp;"lion jungle star"</p>
+      <p><strong>Document 3 (D3):</strong> &nbsp;"fish coral star"</p>
+      <br>
+      <p>Use hyperparameters <strong>α = 1</strong> and <strong>β = 1</strong>.</p>
+      <br>
+      <p><strong>(a)</strong> Show the random initialization of topic assignments.</p>
+      <p><strong>(b)</strong> Write the Gibbs Sampling update formula.</p>
+      <p><strong>(c)</strong> Compute the probabilities for word "fish" in D1 after one iteration.</p>
+      <p><strong>(d)</strong> Show what changes and why after reassignment.</p>
+      <p><strong>(e)</strong> After convergence, what do the topic-word and document-topic distributions look like?</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">What we have</div>
+    <div class="setup-grid">
+      <div class="setup-card">
+        <h4>Vocabulary (V = 5 words)</h4>
+        <span class="pill neutral">fish</span>
+        <span class="pill neutral">lion</span>
+        <span class="pill neutral">star</span>
+        <span class="pill neutral">jungle</span>
+        <span class="pill neutral">coral</span>
+      </div>
+      <div class="setup-card">
+        <h4>Settings</h4>
+        <span class="pill accent">K = 2 topics</span>
+        <span class="pill accent">α = 1</span>
+        <span class="pill accent">β = 1</span>
+        <span class="pill accent">3 documents</span>
+        <span class="pill accent">9 words total</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout why">
+    <div class="callout-title">Why α = 1 and β = 1?</div>
+    These are Dirichlet smoothing values. α = 1 means "we expect documents to mix topics evenly at the start — no strong prior." β = 1 means "we expect topics to use all words equally at the start." They prevent division-by-zero and allow unseen combinations. Larger values = smoother, more uniform distributions.
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn primary" onclick="go(1)">Start Solving →</button>
+  </div>
+</div>
+
+<!-- ════ STEP 1: SETUP ════ -->
+<div class="step-panel" id="panel-1">
+  <div class="step-header">
+    <div class="step-badge">Step 1</div>
+    <div>
+      <div class="step-title">Setup &amp; Notation</div>
+      <div class="step-sub">Define every variable before touching any formula.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Counts we will track</div>
+    <div class="callout note">
+      <div class="callout-title">Four count tables — memorise these</div>
+      LDA Gibbs Sampling needs FOUR numbers updated after every word reassignment:
+    </div>
+    <div class="matrix-wrap" style="margin-top:.75rem;">
+      <table class="matrix">
+        <tr><th>Variable</th><th>Meaning</th><th>Size</th></tr>
+        <tr><td class="mono f-accent">n_dk</td><td>How many words in document <em>d</em> are assigned to topic <em>k</em></td><td>D × K</td></tr>
+        <tr><td class="mono f-accent">n_kw</td><td>How many times word <em>w</em> is assigned to topic <em>k</em> (across all docs)</td><td>K × V</td></tr>
+        <tr><td class="mono f-accent">n_k</td><td>Total words assigned to topic <em>k</em> (sum of row in n_kw)</td><td>K</td></tr>
+        <tr><td class="mono f-accent">n_d</td><td>Total words in document <em>d</em> (stays fixed)</td><td>D</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Our specific numbers</div>
+    <div class="setup-grid">
+      <div class="setup-card">
+        <h4>Documents</h4>
+        <p class="mono" style="font-size:13px;color:var(--muted);margin-bottom:.4rem;">D = 3, each has 3 words</p>
+        <p style="font-size:13px;">D1: fish · lion · star</p>
+        <p style="font-size:13px;">D2: lion · jungle · star</p>
+        <p style="font-size:13px;">D3: fish · coral · star</p>
+      </div>
+      <div class="setup-card">
+        <h4>Vocabulary index</h4>
+        <p class="mono" style="font-size:12px;color:var(--muted);">V = 5 unique words</p>
+        <p style="font-size:13px;margin-top:.4rem;">w=0: fish &nbsp; w=1: lion</p>
+        <p style="font-size:13px;">w=2: star &nbsp; w=3: jungle</p>
+        <p style="font-size:13px;">w=4: coral</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">The two topics</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <div class="setup-card" style="flex:1;min-width:180px;border-color:var(--nature-border);">
+        <h4 style="color:var(--nature);">Topic 0 — will become "Wildlife"</h4>
+        <p style="font-size:13px;color:var(--muted);">LDA doesn't know this yet. After convergence, we see fish, lion, jungle dominating → we name it.</p>
+      </div>
+      <div class="setup-card" style="flex:1;min-width:180px;border-color:var(--space-border);">
+        <h4 style="color:var(--space);">Topic 1 — will become "Universe/Ocean"</h4>
+        <p style="font-size:13px;color:var(--muted);">After convergence, star, coral dominate → we name it.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="go(0)">← Back</button>
+    <button class="nav-btn primary" onclick="go(2)">Next: Initialize →</button>
+  </div>
+</div>
+
+<!-- ════ STEP 2: INITIALIZATION ════ -->
+<div class="step-panel" id="panel-2">
+  <div class="step-header">
+    <div class="step-badge">Step 2</div>
+    <div>
+      <div class="step-title">Random Initialization</div>
+      <div class="step-sub">Answer (a) — Assign every word a topic at random.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Random assignments (coin flip for each word)</div>
+    <div class="assign-row highlight">
+      <span class="word-tag">D1: fish</span><span class="arrow">→</span><span class="topic-tag nature">Topic 0</span><span class="reason">random flip</span>
+    </div>
+    <div class="assign-row">
+      <span class="word-tag">D1: lion</span><span class="arrow">→</span><span class="topic-tag space">Topic 1</span><span class="reason">random flip</span>
+    </div>
+    <div class="assign-row">
+      <span class="word-tag">D1: star</span><span class="arrow">→</span><span class="topic-tag nature">Topic 0</span><span class="reason">random flip</span>
+    </div>
+    <div class="assign-row">
+      <span class="word-tag">D2: lion</span><span class="arrow">→</span><span class="topic-tag nature">Topic 0</span><span class="reason">random flip</span>
+    </div>
+    <div class="assign-row">
+      <span class="word-tag">D2: jungle</span><span class="arrow">→</span><span class="topic-tag space">Topic 1</span><span class="reason">random flip</span>
+    </div>
+    <div class="assign-row">
+      <span class="word-tag">D2: star</span><span class="arrow">→</span><span class="topic-tag space">Topic 1</span><span class="reason">random flip</span>
+    </div>
+    <div class="assign-row">
+      <span class="word-tag">D3: fish</span><span class="arrow">→</span><span class="topic-tag space">Topic 1</span><span class="reason">random flip</span>
+    </div>
+    <div class="assign-row">
+      <span class="word-tag">D3: coral</span><span class="arrow">→</span><span class="topic-tag nature">Topic 0</span><span class="reason">random flip</span>
+    </div>
+    <div class="assign-row">
+      <span class="word-tag">D3: star</span><span class="arrow">→</span><span class="topic-tag nature">Topic 0</span><span class="reason">random flip</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Now build the count tables from these assignments</div>
+
+    <p style="font-size:13px;color:var(--muted);margin-bottom:.75rem;">Count how many words in each document went to each topic:</p>
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <tr><th></th><th class="nature">Topic 0</th><th class="space">Topic 1</th><th>Total (n_d)</th></tr>
+        <tr><td>D1</td><td class="nature">2</td><td class="space">1</td><td>3</td></tr>
+        <tr><td>D2</td><td class="nature">1</td><td class="space">2</td><td>3</td></tr>
+        <tr><td>D3</td><td class="nature">2</td><td class="space">1</td><td>3</td></tr>
+      </table>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-top:.4rem;">← This is n_dk: document × topic counts</div>
+
+    <p style="font-size:13px;color:var(--muted);margin:.75rem 0;">Count how many times each word was assigned to each topic (across ALL docs):</p>
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <tr><th></th><th>fish</th><th>lion</th><th>star</th><th>jungle</th><th>coral</th><th>Total (n_k)</th></tr>
+        <tr><th class="nature">Topic 0</th><td class="nature">1</td><td class="nature">1</td><td class="nature">2</td><td class="nature">0</td><td class="nature">1</td><td class="nature">5</td></tr>
+        <tr><th class="space">Topic 1</th><td class="space">1</td><td class="space">1</td><td class="space">1</td><td class="space">1</td><td class="space">0</td><td class="space">4</td></tr>
+      </table>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-top:.4rem;">← This is n_kw: topic × word counts</div>
+  </div>
+
+  <div class="callout why">
+    <div class="callout-title">Why does this messy start matter?</div>
+    The counts start wrong — "fish" is split between both topics randomly. Gibbs Sampling will FIX this over many iterations by reassigning each word using probability, not randomness. The counts update with every reassignment.
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="go(1)">← Back</button>
+    <button class="nav-btn primary" onclick="go(3)">Next: The Formula →</button>
+  </div>
+</div>
+
+<!-- ════ STEP 3: FORMULA ════ -->
+<div class="step-panel" id="panel-3">
+  <div class="step-header">
+    <div class="step-badge">Step 3</div>
+    <div>
+      <div class="step-title">The Core Formula</div>
+      <div class="step-sub">Answer (b) — The Gibbs Sampling update equation. Understand every symbol.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">The formula</div>
+    <div class="formula-block">
+      <span class="label-f">P(z_i = k | all other assignments) ∝</span>
+      <span class="f-nature">(n_dk + α)</span>
+      <span style="color:var(--dim)"> × </span>
+      <span class="f-space">(n_kw + β)</span>
+      <span style="color:var(--dim)"> / </span>
+      <span class="f-ocean">(n_k + V·β)</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">What every symbol means</div>
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <tr><th>Symbol</th><th>Meaning</th><th>In plain English</th></tr>
+        <tr><td class="mono f-accent">z_i = k</td><td>Word i is assigned to topic k</td><td>Which topic does this word belong to?</td></tr>
+        <tr><td class="mono f-nature">n_dk</td><td>Words in doc d assigned to topic k</td><td>How popular is topic k in this document?</td></tr>
+        <tr><td class="mono f-nature">α</td><td>Document smoothing (= 1)</td><td>Prevents zero probability; adds a "floor"</td></tr>
+        <tr><td class="mono f-space">n_kw</td><td>Times word w assigned to topic k</td><td>How often does topic k use this word?</td></tr>
+        <tr><td class="mono f-space">β</td><td>Word smoothing (= 1)</td><td>Prevents zero probability for rare words</td></tr>
+        <tr><td class="mono f-ocean">n_k</td><td>Total words in topic k</td><td>How big is topic k overall?</td></tr>
+        <tr><td class="mono f-ocean">V·β</td><td>Vocabulary size × β = 5 × 1 = 5</td><td>Normalisation constant</td></tr>
+        <tr><td class="mono" style="color:var(--muted);">∝</td><td>"Proportional to" (not equals)</td><td>We compute raw scores, then normalise</td></tr>
+        <tr><td class="mono" style="color:var(--red);">MINUS current word</td><td>We REMOVE word i from counts first</td><td>Don't count the word we're updating!</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">The two-part intuition</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:.25rem;">
+      <div class="callout why" style="flex:1;min-width:200px;margin:0;">
+        <div class="callout-title">Part 1 — Document preference</div>
+        <span class="f-nature">(n_dk + α)</span><br>
+        "How much does this document already use topic k?"<br>
+        If D1 already has 5 words assigned to Topic 0, it probably wants topic 0 for the next word too.
+      </div>
+      <div class="callout info" style="flex:1;min-width:200px;margin:0;">
+        <div class="callout-title">Part 2 — Word-topic affinity</div>
+        <span class="f-space">(n_kw + β)</span> / <span class="f-ocean">(n_k + Vβ)</span><br>
+        "How much does topic k like this word?"<br>
+        If "fish" appeared 10 times in Topic 0 words, Topic 0 probably owns "fish".
+      </div>
+    </div>
+  </div>
+
+  <div class="callout good">
+    <div class="callout-title">Key step before computing</div>
+    Before we calculate the probability for word i, we <strong>REMOVE</strong> word i from the counts. This is the "all other assignments" part. Then we recalculate with word i excluded, pick the topic, re-add the word to the winning topic's counts.
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="go(2)">← Back</button>
+    <button class="nav-btn primary" onclick="go(4)">Next: Compute "fish" →</button>
+  </div>
+</div>
+
+<!-- ════ STEP 4: COMPUTE "fish" ════ -->
+<div class="step-panel" id="panel-4">
+  <div class="step-header">
+    <div class="step-badge">Step 4</div>
+    <div>
+      <div class="step-title">Iteration 1 — Updating "fish" in D1</div>
+      <div class="step-sub">Answer (c) — Full probability calculation, every number shown.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Starting state (from random init)</div>
+    <div class="callout note">
+      <div class="callout-title">Current assignment of "fish" in D1</div>
+      "fish" in D1 is currently assigned to <span class="f-nature">Topic 0</span>. We REMOVE it from the counts before recalculating.
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin:.75rem 0;">After removing "fish" in D1 from Topic 0, the updated counts are:</p>
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <tr><th></th><th class="nature">Topic 0</th><th class="space">Topic 1</th></tr>
+        <tr><td>D1 (n_dk)</td><td class="hl-red">1 &nbsp;<small>(was 2, minus 1)</small></td><td class="space">1</td></tr>
+        <tr><td>fish (n_kw)</td><td class="hl-red">0 &nbsp;<small>(was 1, minus 1)</small></td><td class="space">1</td></tr>
+        <tr><td>Total n_k</td><td class="hl-red">4 &nbsp;<small>(was 5, minus 1)</small></td><td class="space">4</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Now plug into the formula</div>
+    <div class="formula-block">
+      <span class="label-f">P(z = k | all others) ∝  (n_dk + α) × (n_kw + β) / (n_k + V·β)</span>
+      <span class="label-f" style="margin-top:.5rem;">V = 5, α = 1, β = 1, so V·β = 5×1 = 5</span>
+    </div>
+
+    <p style="font-size:13px;color:var(--muted);margin:.75rem 0 .5rem;"><strong style="color:var(--text);">For Topic 0:</strong></p>
+    <div class="formula-block">
+      <span class="label-f">n_d1,0 (after remove) = 1 &nbsp;|&nbsp; n_0,fish (after remove) = 0 &nbsp;|&nbsp; n_0 (after remove) = 4</span>
+      <br>
+      <span class="f-nature">(1 + 1)</span><span style="color:var(--dim);"> × </span><span class="f-space">(0 + 1)</span><span style="color:var(--dim);"> / </span><span class="f-ocean">(4 + 5)</span>
+      <span style="color:var(--dim);"> = </span>
+      <span class="f-accent">2 × 1 / 9</span>
+      <span style="color:var(--dim);"> = </span>
+      <span class="f-accent">2/9 ≈ 0.222</span>
+    </div>
+
+    <p style="font-size:13px;color:var(--muted);margin:.75rem 0 .5rem;"><strong style="color:var(--text);">For Topic 1:</strong></p>
+    <div class="formula-block">
+      <span class="label-f">n_d1,1 (unchanged) = 1 &nbsp;|&nbsp; n_1,fish (unchanged) = 1 &nbsp;|&nbsp; n_1 (unchanged) = 4</span>
+      <br>
+      <span class="f-nature">(1 + 1)</span><span style="color:var(--dim);"> × </span><span class="f-space">(1 + 1)</span><span style="color:var(--dim);"> / </span><span class="f-ocean">(4 + 5)</span>
+      <span style="color:var(--dim);"> = </span>
+      <span class="f-accent">2 × 2 / 9</span>
+      <span style="color:var(--dim);"> = </span>
+      <span class="f-accent">4/9 ≈ 0.444</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Normalise so they sum to 1</div>
+    <div class="formula-block">
+      <span class="label-f">Raw scores: Topic 0 = 2/9, Topic 1 = 4/9. Sum = 6/9</span>
+      <br>
+      <span class="f-nature">P(Topic 0)</span><span style="color:var(--dim);"> = (2/9) / (6/9) = 2/6 = </span><span class="f-accent">0.333 (33.3%)</span>
+      <br>
+      <span class="f-space">P(Topic 1)</span><span style="color:var(--dim);"> = (4/9) / (6/9) = 4/6 = </span><span class="f-accent">0.667 (66.7%)</span>
+    </div>
+
+    <div class="callout good">
+      <div class="callout-title">Decision</div>
+      Topic 1 has probability 66.7%. We sample from this distribution (or just pick the higher one). "fish" in D1 gets <strong>reassigned to Topic 1</strong>.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Update all counts after reassignment</div>
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <tr><th></th><th class="nature">Topic 0</th><th class="space">Topic 1</th></tr>
+        <tr><td>D1 (n_dk)</td><td class="nature">1</td><td class="hl">2 &nbsp;<small>(+1 because fish moved here)</small></td></tr>
+        <tr><td>fish (n_kw)</td><td class="nature">0</td><td class="hl">2 &nbsp;<small>(+1)</small></td></tr>
+        <tr><td>Total n_k</td><td class="nature">4</td><td class="hl">5 &nbsp;<small>(+1)</small></td></tr>
+      </table>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:.5rem;">These updated counts are used for the NEXT word's calculation.</p>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="go(3)">← Back</button>
+    <button class="nav-btn primary" onclick="go(5)">Next: Compute "star" →</button>
+  </div>
+</div>
+
+<!-- ════ STEP 5: COMPUTE "star" ════ -->
+<div class="step-panel" id="panel-5">
+  <div class="step-header">
+    <div class="step-badge">Step 5</div>
+    <div>
+      <div class="step-title">Iteration 1 — Updating "star" in D1</div>
+      <div class="step-sub">Same process. Notice how changed counts affect the result.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Current state (after "fish" was moved to Topic 1)</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:.6rem;">"star" in D1 is currently Topic 0. Remove it first:</p>
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <tr><th></th><th class="nature">Topic 0</th><th class="space">Topic 1</th></tr>
+        <tr><td>D1 (n_dk)</td><td class="hl-red">0 &nbsp;<small>(was 1, remove star)</small></td><td class="space">2</td></tr>
+        <tr><td>star (n_kw)</td><td class="hl-red">1 &nbsp;<small>(was 2, remove this star)</small></td><td class="space">1</td></tr>
+        <tr><td>Total n_k</td><td class="hl-red">3 &nbsp;<small>(was 4, minus 1)</small></td><td class="space">5</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Calculate probabilities</div>
+    <p style="font-size:13px;color:var(--muted);margin:.4rem 0 .4rem;"><strong style="color:var(--text);">For Topic 0:</strong></p>
+    <div class="formula-block">
+      <span class="f-nature">(0 + 1)</span><span style="color:var(--dim);"> × </span><span class="f-space">(1 + 1)</span><span style="color:var(--dim);"> / </span><span class="f-ocean">(3 + 5)</span>
+      <span style="color:var(--dim);"> = 1 × 2 / 8 = </span><span class="f-accent">2/8 = 0.25</span>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin:.4rem 0 .4rem;"><strong style="color:var(--text);">For Topic 1:</strong></p>
+    <div class="formula-block">
+      <span class="f-nature">(2 + 1)</span><span style="color:var(--dim);"> × </span><span class="f-space">(1 + 1)</span><span style="color:var(--dim);"> / </span><span class="f-ocean">(5 + 5)</span>
+      <span style="color:var(--dim);"> = 3 × 2 / 10 = </span><span class="f-accent">6/10 = 0.6</span>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Normalise</div>
+      <div class="formula-block">
+        Sum = 0.25 + 0.6 = 0.85
+        <br>
+        <span class="f-nature">P(Topic 0)</span> = 0.25 / 0.85 = <span class="f-accent">0.294 (29.4%)</span>
+        <br>
+        <span class="f-space">P(Topic 1)</span> = 0.60 / 0.85 = <span class="f-accent">0.706 (70.6%)</span>
+      </div>
+      <div class="callout good">
+        <div class="callout-title">Decision</div>
+        "star" also moves to <strong>Topic 1</strong> (70.6% probability). Why? D1 now leans strongly toward Topic 1 (n_d1,1 = 2), so words in D1 are pulled that way.
+      </div>
+    </div>
+
+    <div class="callout why">
+      <div class="callout-title">Why did counts change from Step 4?</div>
+      Because "fish" was already moved to Topic 1. n_d1,1 went from 1 to 2. This INCREASED the pull of Topic 1 for "star". This is the cascade effect — each reassignment influences the next word's probability. This is why Gibbs Sampling works: consistent words reinforce each other's topic assignments.
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="go(4)">← Back</button>
+    <button class="nav-btn primary" onclick="go(6)">Next: Compute "lion" →</button>
+  </div>
+</div>
+
+<!-- ════ STEP 6: lion ════ -->
+<div class="step-panel" id="panel-6">
+  <div class="step-header">
+    <div class="step-badge">Step 6</div>
+    <div>
+      <div class="step-title">Iteration 1 — Updating "lion" in D1</div>
+      <div class="step-sub">Answer (d) — See what changes and why.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">State after "fish" and "star" both moved to Topic 1</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:.6rem;">"lion" in D1 is currently Topic 1. Remove it:</p>
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <tr><th></th><th class="nature">Topic 0</th><th class="space">Topic 1</th></tr>
+        <tr><td>D1 (n_dk)</td><td class="nature">0</td><td class="hl-red">1 &nbsp;<small>(was 2, remove lion)</small></td></tr>
+        <tr><td>lion (n_kw)</td><td class="nature">1</td><td class="hl-red">0 &nbsp;<small>(was 1, remove this lion)</small></td></tr>
+        <tr><td>Total n_k</td><td class="nature">3</td><td class="hl-red">5 &nbsp;<small>(was 6, minus 1)</small></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Calculate probabilities</div>
+    <p style="font-size:13px;color:var(--muted);margin:.4rem 0;"><strong style="color:var(--text);">Topic 0:</strong></p>
+    <div class="formula-block">
+      <span class="f-nature">(0 + 1)</span> × <span class="f-space">(1 + 1)</span> / <span class="f-ocean">(3 + 5)</span>
+      = 1 × 2 / 8 = <span class="f-accent">2/8 = 0.25</span>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin:.4rem 0;"><strong style="color:var(--text);">Topic 1:</strong></p>
+    <div class="formula-block">
+      <span class="f-nature">(1 + 1)</span> × <span class="f-space">(0 + 1)</span> / <span class="f-ocean">(5 + 5)</span>
+      = 2 × 1 / 10 = <span class="f-accent">2/10 = 0.2</span>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Normalise</div>
+      <div class="formula-block">
+        Sum = 0.25 + 0.2 = 0.45
+        <br>
+        <span class="f-nature">P(Topic 0)</span> = 0.25 / 0.45 = <span class="f-accent">0.556 (55.6%)</span>
+        <br>
+        <span class="f-space">P(Topic 1)</span> = 0.20 / 0.45 = <span class="f-accent">0.444 (44.4%)</span>
+      </div>
+      <div class="callout good">
+        <div class="callout-title">Decision</div>
+        "lion" moves (or stays at) <strong>Topic 0</strong> (55.6%). Why? Topic 0 still has "lion" in its n_kw count (from D2's lion), so the word-topic affinity pulls it there, even though D1 now leans Topic 1.
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Summary of what changed in Iteration 1 (D1 only)</div>
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <tr><th>Word</th><th>Before</th><th>After</th><th>Why it changed</th></tr>
+        <tr><td class="mono">fish</td><td class="nature">Topic 0</td><td class="space">Topic 1</td><td style="font-size:12px;text-align:left;padding-left:.75rem;">Topic 1 had fish in its counts; Topic 1's doc-affinity was equal → word affinity won</td></tr>
+        <tr><td class="mono">star</td><td class="nature">Topic 0</td><td class="space">Topic 1</td><td style="font-size:12px;text-align:left;padding-left:.75rem;">After fish moved, D1 leaned Topic 1 strongly → cascaded to star</td></tr>
+        <tr><td class="mono">lion</td><td class="space">Topic 1</td><td class="nature">Topic 0</td><td style="font-size:12px;text-align:left;padding-left:.75rem;">lion counted more in Topic 0 globally; D1's topic preference balanced out</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="go(5)">← Back</button>
+    <button class="nav-btn primary" onclick="go(7)">Next: Convergence →</button>
+  </div>
+</div>
+
+<!-- ════ STEP 7: CONVERGENCE ════ -->
+<div class="step-panel" id="panel-7">
+  <div class="step-header">
+    <div class="step-badge">Step 7</div>
+    <div>
+      <div class="step-title">After Many Iterations — Convergence</div>
+      <div class="step-sub">What happens when we repeat for all documents, hundreds of times.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">The pattern LDA discovers</div>
+    <div class="callout note">
+      <div class="callout-title">After ~100+ iterations on our 9-word corpus</div>
+      Words that appear together across documents consistently reinforce each other's topic assignment. The algorithm converges when assignments stop changing between sweeps.
+    </div>
+
+    <p style="font-size:13px;color:var(--muted);margin:.75rem 0 .5rem;">Converged topic-word counts (n_kw) — approximate:</p>
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <tr><th></th><th>fish</th><th>lion</th><th>star</th><th>jungle</th><th>coral</th><th>n_k</th></tr>
+        <tr><th class="nature">Topic 0 "Wildlife"</th><td class="nature">1</td><td class="nature">2</td><td class="nature">0</td><td class="nature">1</td><td class="nature">0</td><td class="nature">4</td></tr>
+        <tr><th class="space">Topic 1 "Cosmos/Ocean"</th><td class="space">1</td><td class="space">0</td><td class="space">3</td><td class="space">0</td><td class="space">1</td><td class="space">5</td></tr>
+      </table>
+    </div>
+
+    <p style="font-size:13px;color:var(--muted);margin:.75rem 0 .5rem;">Converged document-topic counts (n_dk):</p>
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <tr><th></th><th class="nature">Topic 0</th><th class="space">Topic 1</th></tr>
+        <tr><td>D1: "fish lion star"</td><td class="nature">1 (lion)</td><td class="space">2 (fish, star)</td></tr>
+        <tr><td>D2: "lion jungle star"</td><td class="nature">2 (lion, jungle)</td><td class="space">1 (star)</td></tr>
+        <tr><td>D3: "fish coral star"</td><td class="nature">0</td><td class="space">3 (fish, coral, star)</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Why does it converge?</div>
+    <div style="display:flex;flex-direction:column;gap:.5rem;">
+      <div class="flow-eq">
+        <span class="part" style="background:var(--nature-bg);color:var(--nature);">lion appears in D1, D2</span>
+        <span class="mult">→</span>
+        <span class="part" style="background:var(--surface2);color:var(--muted);">n_kw(lion, T0) grows</span>
+        <span class="mult">→</span>
+        <span class="part" style="background:var(--nature-bg);color:var(--nature);">lion always picks T0</span>
+        <span class="mult">→</span>
+        <span class="result">stable</span>
+      </div>
+      <div class="flow-eq">
+        <span class="part" style="background:var(--space-bg);color:var(--space);">star in all 3 docs</span>
+        <span class="mult">→</span>
+        <span class="part" style="background:var(--surface2);color:var(--muted);">n_kw(star, T1) grows</span>
+        <span class="mult">→</span>
+        <span class="part" style="background:var(--space-bg);color:var(--space);">star always picks T1</span>
+        <span class="mult">→</span>
+        <span class="result">stable</span>
+      </div>
+      <div class="flow-eq">
+        <span class="part" style="background:var(--ocean-bg);color:var(--ocean);">D2 has lion+jungle</span>
+        <span class="mult">→</span>
+        <span class="part" style="background:var(--surface2);color:var(--muted);">D2 becomes T0-heavy</span>
+        <span class="mult">→</span>
+        <span class="part" style="background:var(--ocean-bg);color:var(--ocean);">jungle also picks T0</span>
+        <span class="mult">→</span>
+        <span class="result">stable</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="go(6)">← Back</button>
+    <button class="nav-btn primary" onclick="go(8)">Next: Final Answer →</button>
+  </div>
+</div>
+
+<!-- ════ STEP 8: FINAL ANSWER ════ -->
+<div class="step-panel" id="panel-8">
+  <div class="step-header">
+    <div class="step-badge">✓ Done</div>
+    <div>
+      <div class="step-title">Final Answer — What to Write in the Exam</div>
+      <div class="step-sub">Answer (e) + summary of all parts.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Topic-word distribution (φ) — normalised</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:.6rem;">φ_kw = (n_kw + β) / (n_k + V·β). This is the probability of word w given topic k.</p>
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <tr><th></th><th>fish</th><th>lion</th><th>star</th><th>jungle</th><th>coral</th></tr>
+        <tr>
+          <th class="nature">Topic 0</th>
+          <td class="nature">(1+1)/(4+5) = 2/9 ≈ 0.22</td>
+          <td class="nature">(2+1)/(4+5) = 3/9 ≈ 0.33</td>
+          <td class="nature">(0+1)/(4+5) = 1/9 ≈ 0.11</td>
+          <td class="nature">(1+1)/(4+5) = 2/9 ≈ 0.22</td>
+          <td class="nature">(0+1)/(4+5) = 1/9 ≈ 0.11</td>
+        </tr>
+        <tr>
+          <th class="space">Topic 1</th>
+          <td class="space">(1+1)/(5+5) = 2/10 = 0.20</td>
+          <td class="space">(0+1)/(5+5) = 1/10 = 0.10</td>
+          <td class="space">(3+1)/(5+5) = 4/10 = 0.40</td>
+          <td class="space">(0+1)/(5+5) = 1/10 = 0.10</td>
+          <td class="space">(1+1)/(5+5) = 2/10 = 0.20</td>
+        </tr>
+      </table>
+    </div>
+    <div class="callout good" style="margin-top:.75rem;">
+      <div class="callout-title">Read the result</div>
+      Topic 0: lion (0.33) and jungle (0.22) dominate → it's a Wildlife topic.<br>
+      Topic 1: star (0.40) dominates → it's a Cosmos/Ocean topic.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Document-topic distribution (θ) — normalised</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:.6rem;">θ_dk = (n_dk + α) / (n_d + K·α). Probability of topic k given document d.</p>
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <tr><th></th><th class="nature">Topic 0 (Wildlife)</th><th class="space">Topic 1 (Cosmos)</th></tr>
+        <tr><td>D1</td><td class="nature">(1+1)/(3+2) = 2/5 = 0.40</td><td class="space">(2+1)/(3+2) = 3/5 = 0.60</td></tr>
+        <tr><td>D2</td><td class="nature">(2+1)/(3+2) = 3/5 = 0.60</td><td class="space">(1+1)/(3+2) = 2/5 = 0.40</td></tr>
+        <tr><td>D3</td><td class="nature">(0+1)/(3+2) = 1/5 = 0.20</td><td class="space">(3+1)/(3+2) = 4/5 = 0.80</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Exam cheat sheet — all 5 parts in one place</div>
+    <div class="final-answer">
+      <h3>Complete Answer Summary</h3>
+      <div class="final-row"><span class="final-label">(a) Init:</span><span class="final-val">Assign each word a random topic. Build n_dk and n_kw tables from these.</span></div>
+      <hr class="divider" style="margin:.5rem 0;border-color:rgba(255,255,255,.05);">
+      <div class="final-row"><span class="final-label">(b) Formula:</span><span class="final-val">P(z=k) ∝ (n_dk + α) × (n_kw + β) / (n_k + Vβ)</span></div>
+      <hr class="divider" style="margin:.5rem 0;border-color:rgba(255,255,255,.05);">
+      <div class="final-row"><span class="final-label">(c) P("fish"):</span><span class="final-val">Topic 0 = 0.333, Topic 1 = 0.667 → assign Topic 1</span></div>
+      <hr class="divider" style="margin:.5rem 0;border-color:rgba(255,255,255,.05);">
+      <div class="final-row"><span class="final-label">(d) Changed:</span><span class="final-val">fish: T0→T1, star: T0→T1, lion: T1→T0. Counts cascade.</span></div>
+      <hr class="divider" style="margin:.5rem 0;border-color:rgba(255,255,255,.05);">
+      <div class="final-row"><span class="final-label">(e) Final φ:</span><span class="final-val">T0 = {lion:0.33, jungle:0.22}, T1 = {star:0.40, coral:0.20}</span></div>
+      <div class="final-row"><span class="final-label" style="min-width:120px;">(e) Final θ:</span><span class="final-val">D3 is 80% Topic 1; D2 is 60% Topic 0; D1 is 60% Topic 1</span></div>
+    </div>
+  </div>
+
+  <div class="callout why">
+    <div class="callout-title">The one-line exam definition</div>
+    LDA Gibbs Sampling repeatedly removes one word's topic assignment and resamples it using <strong>P ∝ (doc-topic affinity) × (word-topic affinity)</strong>, updating the count tables after each reassignment, until assignments converge.
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="go(7)">← Back</button>
+    <button class="nav-btn primary" onclick="go(0)">↺ Start Over</button>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+  const totalSteps = 9;
+  let current = 0;
+
+  function go(n) {
+    document.querySelectorAll('.step-panel').forEach((p,i) => p.classList.toggle('active', i === n));
+    document.querySelectorAll('.step-nav-btn').forEach((b,i) => b.classList.toggle('active', i === n));
+    document.getElementById('prog').style.width = ((n+1)/totalSteps*100) + '%';
+    current = n;
+    window.scrollTo(0,0);
+  }
+</script>
+</body>
+</html>
