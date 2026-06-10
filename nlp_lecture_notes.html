@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NLP Fundamentals — University Lecture Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ─── Design tokens ─── */
+  :root {
+    --ink:        #1a1a2e;
+    --ink-light:  #3a3a5c;
+    --ink-muted:  #6b6b8a;
+    --cream:      #fdfcf8;
+    --rule:       #e8e4dc;
+    --accent:     #2d6a9f;       /* deep university blue */
+    --accent-2:   #0f4c75;
+    --gold:       #c9843a;       /* academic amber */
+    --teal:       #1a7a6e;
+    --rose:       #8b3a52;
+    --green:      #2d7a4f;
+    --card-bg:    #ffffff;
+    --shadow-sm:  0 1px 4px rgba(26,26,46,.07);
+    --shadow-md:  0 4px 16px rgba(26,26,46,.09);
+    --shadow-lg:  0 8px 32px rgba(26,26,46,.12);
+    --radius:     10px;
+    --mono:       'JetBrains Mono', 'Courier New', monospace;
+    --serif:      'Source Serif 4', Georgia, serif;
+    --sans:       'Inter', system-ui, sans-serif;
+  }
+
+  /* ─── Reset & base ─── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body {
+    font-family: var(--sans);
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Typography ─── */
+  h1, h2, h3, h4 {
+    font-family: var(--serif);
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--ink);
+  }
+  h1 { font-size: clamp(2rem, 5vw, 3.2rem); letter-spacing: -.5px; }
+  h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); margin-bottom: .6rem; }
+  h3 { font-size: 1.2rem; margin-bottom: .4rem; }
+  h4 { font-size: 1rem; font-family: var(--sans); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-muted); }
+  p  { margin-bottom: 1rem; color: var(--ink-light); }
+  strong { color: var(--ink); }
+  a  { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ul, ol { padding-left: 1.4rem; margin-bottom: 1rem; color: var(--ink-light); }
+  li { margin-bottom: .35rem; }
+
+  /* ─── Layout ─── */
+  .page-wrap { max-width: 960px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+
+  /* ─── Hero header ─── */
+  .hero {
+    background: linear-gradient(135deg, #0f2027 0%, #1a3a5c 50%, #2d6a9f 100%);
+    color: #fff;
+    padding: 4rem 2rem 3rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.25);
+    color: rgba(255,255,255,.85);
+    font-size: .75rem;
+    font-weight: 500;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: .3rem 1rem;
+    border-radius: 99px;
+    margin-bottom: 1.2rem;
+  }
+  .hero h1 {
+    color: #fff;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    margin-bottom: .6rem;
+    position: relative;
+  }
+  .hero-sub {
+    color: rgba(255,255,255,.7);
+    font-size: 1.05rem;
+    max-width: 640px;
+    margin: 0 auto 1.6rem;
+    font-family: var(--serif);
+    font-style: italic;
+  }
+  .hero-meta {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+  .hero-meta span {
+    color: rgba(255,255,255,.6);
+    font-size: .82rem;
+    font-weight: 500;
+    letter-spacing: .05em;
+  }
+  .hero-meta strong { color: rgba(255,255,255,.9); }
+
+  /* ─── Table of contents ─── */
+  .toc-card {
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 2rem 2.2rem;
+    margin: 2.5rem 0;
+    box-shadow: var(--shadow-sm);
+  }
+  .toc-card h2 { font-size: 1.1rem; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-muted); margin-bottom: 1rem; font-family: var(--sans); }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .3rem .8rem; }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .35rem .5rem;
+    border-radius: 6px;
+    color: var(--accent);
+    font-size: .93rem;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .toc-item:hover { background: #f0f5fb; text-decoration: none; }
+  .toc-num {
+    background: var(--accent);
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 600;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* ─── Section cards ─── */
+  .section {
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    padding: 2.4rem 2.8rem;
+    margin-bottom: 2.2rem;
+    box-shadow: var(--shadow-md);
+    position: relative;
+  }
+  .section::before {
+    content: attr(data-section);
+    position: absolute;
+    top: 1.6rem; right: 1.8rem;
+    font-family: var(--serif);
+    font-size: 4rem;
+    font-weight: 700;
+    color: rgba(45, 106, 159, .06);
+    line-height: 1;
+    pointer-events: none;
+  }
+  .section-label {
+    display: inline-block;
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: .25rem .75rem;
+    border-radius: 99px;
+    margin-bottom: .9rem;
+  }
+  .label-blue  { background: #e8f1fb; color: var(--accent-2); }
+  .label-gold  { background: #fdf3e7; color: #9a5f1e; }
+  .label-teal  { background: #e7f5f3; color: var(--teal); }
+  .label-rose  { background: #faedf0; color: var(--rose); }
+  .label-green { background: #e7f5ed; color: var(--green); }
+
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 1.8rem 0;
+  }
+
+  /* ─── Special boxes ─── */
+  .box {
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    margin: 1.4rem 0;
+    border-left: 4px solid;
+  }
+  .box-title {
+    font-weight: 600;
+    font-size: .82rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: .5rem;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+  }
+  .prof-note   { background: #fef9ec; border-color: var(--gold); }
+  .prof-note .box-title { color: #9a5f1e; }
+  .exam-tip    { background: #eef7ff; border-color: var(--accent); }
+  .exam-tip .box-title { color: var(--accent-2); }
+  .example-box { background: #f2fbf8; border-color: var(--teal); }
+  .example-box .box-title { color: var(--teal); }
+  .warning-box { background: #fdf0f2; border-color: var(--rose); }
+  .warning-box .box-title { color: var(--rose); }
+  .definition  { background: #f4f0fc; border-color: #7c5cbf; }
+  .definition .box-title { color: #5a3d99; }
+  .box p, .box li { margin-bottom: .4rem; font-size: .95rem; }
+  .box p:last-child { margin-bottom: 0; }
+
+  /* ─── Code blocks ─── */
+  pre {
+    background: #1a1a2e;
+    color: #c9d1d9;
+    border-radius: 8px;
+    padding: 1.3rem 1.6rem;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: .82rem;
+    line-height: 1.65;
+    margin: 1.2rem 0;
+    border: 1px solid rgba(255,255,255,.06);
+    tab-size: 2;
+  }
+  code {
+    font-family: var(--mono);
+    background: #eef2f8;
+    color: #2d4a7a;
+    padding: .15em .4em;
+    border-radius: 4px;
+    font-size: .88em;
+  }
+  pre code { background: none; color: inherit; padding: 0; border-radius: 0; font-size: inherit; }
+  .kw  { color: #ff7b72; }   /* keyword */
+  .fn  { color: #d2a8ff; }   /* function */
+  .str { color: #a5d6ff; }   /* string */
+  .cm  { color: #8b949e; font-style: italic; } /* comment */
+  .num { color: #f0883e; }   /* number */
+  .op  { color: #79c0ff; }   /* operator */
+
+  /* ─── Tables ─── */
+  .table-wrap { overflow-x: auto; margin: 1.4rem 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .9rem;
+  }
+  thead th {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    font-family: var(--sans);
+    font-size: .8rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: .85rem 1rem;
+    text-align: left;
+    white-space: nowrap;
+  }
+  thead th:first-child { border-radius: 6px 0 0 0; }
+  thead th:last-child  { border-radius: 0 6px 0 0; }
+  tbody tr { border-bottom: 1px solid var(--rule); }
+  tbody tr:nth-child(even) { background: #f8f9fe; }
+  tbody tr:hover { background: #f0f5fb; }
+  td { padding: .75rem 1rem; color: var(--ink-light); vertical-align: top; }
+  td:first-child { font-weight: 500; color: var(--ink); }
+  .badge {
+    display: inline-block;
+    padding: .15rem .55rem;
+    border-radius: 99px;
+    font-size: .75rem;
+    font-weight: 600;
+  }
+  .badge-green { background: #dcf5e5; color: #1a6b38; }
+  .badge-red   { background: #fde8ec; color: #8b2038; }
+  .badge-blue  { background: #e0edfb; color: #1a4a82; }
+  .badge-gold  { background: #fdf0dc; color: #8a5015; }
+
+  /* ─── Process steps ─── */
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: 1.2rem 0; }
+  .steps li {
+    counter-increment: step;
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: flex-start;
+  }
+  .steps li::before {
+    content: counter(step);
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: .78rem;
+    min-width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: .1rem;
+  }
+  .steps li p { margin: 0; font-size: .95rem; }
+
+  /* ─── Key takeaways ─── */
+  .takeaway-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1.2rem 0;
+  }
+  .takeaway-card {
+    background: linear-gradient(135deg, #f4f8fd 0%, #eaf2ff 100%);
+    border: 1px solid #d0e4f7;
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+  }
+  .takeaway-card h4 { font-size: .8rem; color: var(--accent-2); font-family: var(--sans); font-weight: 700; margin-bottom: .4rem; }
+  .takeaway-card p  { font-size: .85rem; color: var(--ink-light); margin: 0; }
+
+  /* ─── Quick revision ─── */
+  .revision-list {
+    list-style: none; padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: .6rem;
+  }
+  .revision-list li {
+    display: flex; align-items: flex-start; gap: .6rem;
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: .6rem .9rem;
+    font-size: .88rem;
+  }
+  .revision-list li::before {
+    content: '✓';
+    color: var(--teal);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* ─── Pipeline diagram ─── */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .3rem;
+    margin: 1.4rem 0;
+  }
+  .pipe-step {
+    background: var(--accent);
+    color: #fff;
+    padding: .55rem 1rem;
+    border-radius: 6px;
+    font-size: .82rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .pipe-arrow {
+    color: var(--ink-muted);
+    font-size: 1.1rem;
+    padding: 0 .1rem;
+  }
+
+  /* ─── Two-column ─── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin: 1.2rem 0; }
+  @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* ─── Conclusion banner ─── */
+  .conclusion-banner {
+    background: linear-gradient(135deg, var(--accent-2), var(--teal));
+    color: #fff;
+    border-radius: var(--radius);
+    padding: 2.5rem 2.8rem;
+    text-align: center;
+    margin-top: 2.5rem;
+  }
+  .conclusion-banner h2 { color: #fff; font-size: 1.6rem; margin-bottom: .6rem; }
+  .conclusion-banner p  { color: rgba(255,255,255,.8); max-width: 600px; margin: 0 auto; font-family: var(--serif); font-style: italic; font-size: 1.05rem; }
+
+  /* ─── Utility ─── */
+  .mt-sm { margin-top: .6rem; }
+  .mb-0  { margin-bottom: 0; }
+  .text-muted { color: var(--ink-muted); font-size: .9rem; }
+
+  /* ─── Print ─── */
+  @media print {
+    body { background: #fff; }
+    .hero { background: #1a3a5c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .section { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+    pre { white-space: pre-wrap; word-break: break-all; }
+    a::after { content: ' (' attr(href) ')'; font-size: .8rem; color: #888; }
+  }
+
+  /* ─── Scrollbar ─── */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #f0f0f0; }
+  ::-webkit-scrollbar-thumb { background: #c0c8d8; border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════
+     HERO
+════════════════════════════════════════════════════ -->
+<header class="hero">
+  <div class="hero-badge">University Lecture Notes · NLP</div>
+  <h1>Natural Language Processing<br>Foundations</h1>
+  <p class="hero-sub">
+    A comprehensive, exam-ready guide covering the NLP pipeline, text normalization,
+    stemming &amp; lemmatization, and stop-word filtration.
+  </p>
+  <div class="hero-meta">
+    <span><strong>Level:</strong> Undergraduate / Postgraduate</span>
+    <span><strong>Module:</strong> NLP &amp; Computational Linguistics</span>
+    <span><strong>Depth:</strong> Conceptual → Technical</span>
+  </div>
+</header>
+
+<main class="page-wrap">
+
+<!-- ════════════════════════════════════════════════════
+     INTRODUCTION
+════════════════════════════════════════════════════ -->
+<section class="section" id="introduction" data-section="§0">
+  <span class="section-label label-blue">Introduction</span>
+  <h2>Welcome to NLP Fundamentals</h2>
+  <p>
+    Natural Language Processing (NLP) is the subfield of Artificial Intelligence concerned with enabling
+    computers to understand, interpret, and generate human language. From the search engine that completes
+    your query to the assistant that reads your email aloud, NLP is invisible infrastructure.
+  </p>
+  <p>
+    This lecture note covers four tightly interconnected topics that form the <em>preprocessing backbone</em>
+    of almost every NLP system. Master these, and every advanced topic — transformers, LLMs, sentiment
+    analysis — becomes far easier to reason about.
+  </p>
+  <div class="box prof-note">
+    <div class="box-title">📖 Professor's Opening Note</div>
+    <p>
+      Every NLP system, regardless of how sophisticated, still begins with raw text. Understanding
+      how that raw text is cleaned, structured, and reduced into meaningful units is not a "nice-to-have"
+      — it is fundamental. Students who gloss over preprocessing consistently produce NLP systems that
+      fail in production. We will be thorough here.
+    </p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+════════════════════════════════════════════════════ -->
+<nav class="toc-card" aria-label="Table of Contents">
+  <h2>Table of Contents</h2>
+  <div class="toc-grid">
+    <a class="toc-item" href="#topic1"><span class="toc-num">1</span>NLP Pipeline Taxonomy</a>
+    <a class="toc-item" href="#morphological"><span class="toc-num">1a</span>Morphological Analysis</a>
+    <a class="toc-item" href="#syntactic"><span class="toc-num">1b</span>Syntactic Analysis</a>
+    <a class="toc-item" href="#semantic"><span class="toc-num">1c</span>Semantic Analysis</a>
+    <a class="toc-item" href="#topic2"><span class="toc-num">2</span>Text Normalization</a>
+    <a class="toc-item" href="#tokenization"><span class="toc-num">2a</span>Deterministic Tokenization</a>
+    <a class="toc-item" href="#casefolding"><span class="toc-num">2b</span>Case-Folding &amp; Limits</a>
+    <a class="toc-item" href="#topic3"><span class="toc-num">3</span>Stemming vs Lemmatization</a>
+    <a class="toc-item" href="#porter"><span class="toc-num">3a</span>Porter Stemmer Rules</a>
+    <a class="toc-item" href="#wordnet"><span class="toc-num">3b</span>WordNet Analysis</a>
+    <a class="toc-item" href="#topic4"><span class="toc-num">4</span>Stop-Word Filtration</a>
+    <a class="toc-item" href="#takeaways"><span class="toc-num">★</span>Key Takeaways</a>
+    <a class="toc-item" href="#revision"><span class="toc-num">✓</span>Quick Revision</a>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════════════════
+     TOPIC 1 · NLP PIPELINE TAXONOMY
+════════════════════════════════════════════════════ -->
+<section class="section" id="topic1" data-section="§1">
+  <span class="section-label label-blue">Topic 1</span>
+  <h2>The NLP Pipeline Taxonomy</h2>
+
+  <p>
+    An NLP pipeline is a structured, sequential set of processing stages that transform unstructured
+    natural language text into a structured representation that machines can reason about.
+    Rather than treating a document as a flat string, the pipeline decomposes it into progressively
+    richer layers of linguistic knowledge.
+  </p>
+
+  <div class="box definition">
+    <div class="box-title">📌 Formal Definition</div>
+    <p>
+      <strong>NLP Pipeline:</strong> A layered transformation process in which raw text passes through
+      a series of analytical modules — each module consuming the output of the previous one — to build
+      structured linguistic representations at morphological, syntactic, and semantic levels.
+    </p>
+  </div>
+
+  <h3>The Standard Pipeline Architecture</h3>
+  <div class="pipeline">
+    <div class="pipe-step">Raw Text</div>
+    <span class="pipe-arrow">→</span>
+    <div class="pipe-step">Tokenization</div>
+    <span class="pipe-arrow">→</span>
+    <div class="pipe-step">Normalization</div>
+    <span class="pipe-arrow">→</span>
+    <div class="pipe-step">Morphological Analysis</div>
+    <span class="pipe-arrow">→</span>
+    <div class="pipe-step">Syntactic Analysis</div>
+    <span class="pipe-arrow">→</span>
+    <div class="pipe-step">Semantic Analysis</div>
+    <span class="pipe-arrow">→</span>
+    <div class="pipe-step">Output / Representation</div>
+  </div>
+
+  <div class="box prof-note">
+    <div class="box-title">📖 Professor's Note — Pipeline Taxonomy</div>
+    <p>
+      Notice that each stage <em>depends on</em> the stage before it. If tokenization is incorrect,
+      every downstream module will amplify that error. This is called <strong>error propagation</strong>
+      and it is the central challenge in cascaded NLP pipelines. Modern neural approaches (BERT, GPT)
+      attempt to solve this by learning jointly across levels, but classical pipelines remain essential
+      for interpretability and low-resource settings.
+    </p>
+  </div>
+
+  <hr class="section-divider" id="morphological" />
+
+  <!-- 1a. MORPHOLOGICAL ANALYSIS -->
+  <h3>1a. Morphological Analysis</h3>
+  <p>
+    Morphology is the branch of linguistics concerned with the internal structure of words. In NLP,
+    morphological analysis is the process of decomposing a word into its constituent morphemes —
+    the smallest units of meaning — and determining the word's grammatical properties.
+  </p>
+
+  <div class="box definition">
+    <div class="box-title">📌 Definition — Morpheme</div>
+    <p>A <strong>morpheme</strong> is the smallest meaningful unit of a language. For example:
+    <code>unhappiness</code> = <code>un-</code> (prefix, negation) + <code>happy</code> (root) + <code>-ness</code> (suffix, nominaliser).</p>
+  </div>
+
+  <h4>Types of Morphological Processes</h4>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Process</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>Inflection</td><td>Grammatical variation that does not change the core meaning or lexical category</td><td>run → running, runs, ran</td></tr>
+        <tr><td>Derivation</td><td>Creates a new word, often changing the lexical category or meaning</td><td>happy → unhappy, happiness</td></tr>
+        <tr><td>Compounding</td><td>Two or more free morphemes combine to form a new word</td><td>black + board → blackboard</td></tr>
+        <tr><td>Cliticisation</td><td>A morpheme attaches phonologically to an adjacent word</td><td>I am → I'm; he will → he'll</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Morphological Analysis Tasks in NLP</h4>
+  <ul>
+    <li><strong>Morphological segmentation:</strong> splitting a word into morphemes (e.g., <code>played</code> → <code>play + ed</code>)</li>
+    <li><strong>POS tagging:</strong> assigning grammatical categories (noun, verb, adjective…)</li>
+    <li><strong>Lemmatization / stemming:</strong> reducing word forms to a base (detailed in Topic 3)</li>
+    <li><strong>Morphological generation:</strong> producing inflected forms from a lemma (used in NLG systems)</li>
+  </ul>
+
+  <div class="box example-box">
+    <div class="box-title">🧪 Real-World Example</div>
+    <p>Search engines use morphological analysis so that a query for <em>running</em> also retrieves
+    documents containing <em>run</em>, <em>runs</em>, <em>runner</em>. Without it, results would be
+    severely limited by surface-form mismatches.</p>
+  </div>
+
+<pre><code><span class="cm"># Morphological analysis with NLTK</span>
+<span class="kw">import</span> nltk
+<span class="kw">from</span> nltk.stem <span class="kw">import</span> WordNetLemmatizer
+
+lemmatizer = WordNetLemmatizer()
+
+words = [<span class="str">"running"</span>, <span class="str">"unhappiness"</span>, <span class="str">"studies"</span>, <span class="str">"better"</span>]
+<span class="kw">for</span> w <span class="kw">in</span> words:
+    <span class="fn">print</span>(<span class="str">f"{w:15} → lemma: {lemmatizer.lemmatize(w, pos='v')}"</span>)
+
+<span class="cm"># Output:
+# running         → lemma: run
+# unhappiness     → lemma: unhappiness
+# studies         → lemma: study (pos='n')
+# better          → lemma: well  (pos='a')</span>
+</code></pre>
+
+  <hr class="section-divider" id="syntactic" />
+
+  <!-- 1b. SYNTACTIC ANALYSIS -->
+  <h3>1b. Syntactic Analysis (Parsing)</h3>
+  <p>
+    Syntactic analysis, often called <em>parsing</em>, is the process of determining the grammatical
+    structure of a sentence by analyzing the relationships among its words. The output is typically
+    a <strong>parse tree</strong> or a <strong>dependency graph</strong>.
+  </p>
+
+  <div class="box definition">
+    <div class="box-title">📌 Definition — Parse Tree</div>
+    <p>
+      A <strong>parse tree</strong> (also called a constituency tree or phrase-structure tree) is a
+      hierarchical, tree-shaped representation of the syntactic structure of a sentence according to a
+      formal grammar. Each internal node represents a grammatical category (NP, VP, PP…) and each
+      leaf node represents a terminal token (word).
+    </p>
+  </div>
+
+  <h4>Two Major Approaches to Parsing</h4>
+  <div class="two-col">
+    <div class="box exam-tip" style="margin:0">
+      <div class="box-title">📐 Constituency Parsing (Phrase-Structure)</div>
+      <p>Groups words into nested <em>constituents</em> (phrases). Based on Context-Free Grammars (CFG).
+      Each node is labeled with a phrase type: NP, VP, PP, etc.</p>
+      <p><strong>Output:</strong> A hierarchical tree structure (Penn Treebank format).</p>
+    </div>
+    <div class="box example-box" style="margin:0">
+      <div class="box-title">🔗 Dependency Parsing</div>
+      <p>Represents grammatical structure as a set of <em>binary, typed dependencies</em> between words.
+      One word is the <em>head</em>; the other is the <em>dependent</em>.</p>
+      <p><strong>Output:</strong> A directed graph, one node per token (Universal Dependencies format).</p>
+    </div>
+  </div>
+
+  <div class="box example-box mt-sm">
+    <div class="box-title">🧪 Technical Example — Constituency Parse</div>
+    <p>Sentence: <em>"The quick fox jumped over the fence."</em></p>
+    <pre><code>(S
+  (NP (DT The) (JJ quick) (NN fox))
+  (VP (VBD jumped)
+    (PP (IN over)
+      (NP (DT the) (NN fence)))))
+</code></pre>
+    <p>NP = Noun Phrase, VP = Verb Phrase, PP = Prepositional Phrase, DT = Determiner, JJ = Adjective, NN = Noun, VBD = Verb past tense, IN = Preposition</p>
+  </div>
+
+  <div class="box example-box">
+    <div class="box-title">🧪 Technical Example — Dependency Parse</div>
+    <p>Sentence: <em>"The cat sat on the mat."</em></p>
+    <pre><code>sat     ROOT
+cat     nsubj  → sat
+The     det    → cat
+on      prep   → sat
+mat     pobj   → on
+the     det    → mat
+</code></pre>
+  </div>
+
+  <div class="box exam-tip">
+    <div class="box-title">🎯 Exam Tip</div>
+    <p>Be able to draw a constituency parse tree for a short sentence. Examiners often provide a
+    sentence and ask you to label the tree nodes with grammatical category symbols (S, NP, VP, PP, DT, NN, VB…).
+    Also know the difference between ambiguity types: <em>structural ambiguity</em> (same words, different trees)
+    vs. <em>lexical ambiguity</em> (same word, different meanings).</p>
+  </div>
+
+  <hr class="section-divider" id="semantic" />
+
+  <!-- 1c. SEMANTIC ANALYSIS -->
+  <h3>1c. Semantic Analysis</h3>
+  <p>
+    Semantic analysis is the process of determining the <em>meaning</em> of a sentence or discourse,
+    moving beyond structural form. While syntax asks "is this grammatically well-formed?",
+    semantics asks "what does it actually mean?".
+  </p>
+
+  <div class="box definition">
+    <div class="box-title">📌 Definition — Compositional Semantics</div>
+    <p>
+      <strong>Compositional semantics</strong> (Frege's Principle) holds that the meaning of a complex
+      expression is determined by the meanings of its parts and the syntactic rules used to combine them.
+      It provides the theoretical foundation for semantic parsing in NLP.
+    </p>
+  </div>
+
+  <h4>Levels of Semantic Analysis</h4>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Level</th><th>What It Captures</th><th>Key NLP Task</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>Lexical Semantics</td><td>Meaning of individual words</td><td>Word Sense Disambiguation (WSD)</td><td>"bank" (river vs. financial)</td></tr>
+        <tr><td>Sentential Semantics</td><td>Meaning of a full sentence</td><td>Semantic Role Labeling (SRL)</td><td>Who did what to whom</td></tr>
+        <tr><td>Discourse Semantics</td><td>Meaning across sentences</td><td>Co-reference Resolution</td><td>"She said she was tired." → who is she?</td></tr>
+        <tr><td>Pragmatics</td><td>Meaning in context / intent</td><td>Intent Detection</td><td>"Can you pass the salt?" = a request, not a question</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="box example-box">
+    <div class="box-title">🧪 Real-World Example — Semantic Role Labeling</div>
+    <p>Sentence: <em>"NASA launched the satellite into orbit."</em></p>
+    <ul>
+      <li><strong>Agent (ARG0):</strong> NASA — the one performing the action</li>
+      <li><strong>Predicate:</strong> launched — the event/action</li>
+      <li><strong>Theme (ARG1):</strong> the satellite — what was acted upon</li>
+      <li><strong>Location (ARGM-LOC):</strong> into orbit — where it went</li>
+    </ul>
+  </div>
+
+  <div class="box warning-box">
+    <div class="box-title">⚠️ Common Misconception</div>
+    <p>
+      Students often confuse <strong>syntax</strong> and <strong>semantics</strong>. Remember:
+      a sentence can be syntactically correct but semantically anomalous —
+      Chomsky's famous example: <em>"Colorless green ideas sleep furiously."</em>
+      Grammatically perfect; semantically nonsensical. The pipeline levels are distinct.
+    </p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     TOPIC 2 · TEXT NORMALIZATION
+════════════════════════════════════════════════════ -->
+<section class="section" id="topic2" data-section="§2">
+  <span class="section-label label-gold">Topic 2</span>
+  <h2>Text Normalization</h2>
+
+  <p>
+    Text normalization is the collection of preprocessing operations that transform raw, heterogeneous
+    text into a cleaner, more uniform form suitable for downstream linguistic analysis. Think of it
+    as standardizing the "surface form" of language before deeper analysis begins.
+  </p>
+
+  <div class="box definition">
+    <div class="box-title">📌 Definition</div>
+    <p>
+      <strong>Text normalization</strong> refers to the systematic application of transformations to
+      a text corpus to reduce superficial variation that does not contribute to meaning — such as
+      inconsistent casing, punctuation noise, encoding artifacts, or typographic errors — while
+      preserving semantically relevant distinctions.
+    </p>
+  </div>
+
+  <h4>Core Normalization Operations</h4>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Operation</th><th>What It Does</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>Tokenization</td><td>Splits text into tokens (words, subwords, chars)</td><td>"Hello!" → ["Hello", "!"]</td></tr>
+        <tr><td>Case-folding</td><td>Converts all characters to lowercase</td><td>"NASA" → "nasa"</td></tr>
+        <tr><td>Punctuation removal</td><td>Strips non-alphanumeric characters</td><td>"it's" → "its" or "it s"</td></tr>
+        <tr><td>Number normalization</td><td>Replaces digits with a token or normalizes forms</td><td>"$1,200" → "NUM" or "1200"</td></tr>
+        <tr><td>Accent stripping</td><td>Removes diacritics from characters</td><td>"naïve" → "naive"</td></tr>
+        <tr><td>Whitespace normalization</td><td>Collapses multiple spaces/tabs/newlines</td><td>"hello&nbsp;&nbsp;world" → "hello world"</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="section-divider" id="tokenization" />
+
+  <!-- 2a. DETERMINISTIC STRING TOKENIZATION -->
+  <h3>2a. Deterministic String Tokenization Strategies</h3>
+  <p>
+    Tokenization is the first and most fundamental normalization step. Before any linguistic analysis can
+    occur, we must define what the basic unit of processing is. A <em>token</em> is that basic unit —
+    usually a word, punctuation mark, or number.
+  </p>
+
+  <div class="box definition">
+    <div class="box-title">📌 Definition</div>
+    <p>
+      <strong>Tokenization</strong> is the process of segmenting a raw text string into a sequence of
+      tokens. A <strong>deterministic</strong> tokenizer uses explicit, pre-defined rules (typically
+      regular expressions or finite-state automata) rather than probabilistic models, ensuring the same
+      input always yields the same output.
+    </p>
+  </div>
+
+  <h4>Strategy 1 — Whitespace Tokenization</h4>
+  <p>The simplest strategy: split on every whitespace character. Fast but naive.</p>
+  <pre><code><span class="cm"># Python: whitespace tokenization</span>
+text = <span class="str">"She said, 'Don't panic!' and left."</span>
+tokens = text.split()
+<span class="fn">print</span>(tokens)
+<span class="cm"># ["She", "said,", "'Don't", "panic!'", "and", "left."]
+# Problem: punctuation is stuck to words!</span>
+</code></pre>
+
+  <h4>Strategy 2 — Regular Expression Tokenization</h4>
+  <p>Define a regular expression that matches tokens (positive match) or delimiters (split pattern).
+  This is the dominant deterministic approach in classical NLP.</p>
+  <pre><code><span class="kw">import</span> re
+
+<span class="cm"># Positive token pattern: match words, numbers, and punctuation separately</span>
+pattern = <span class="str">r"\w+|[^\w\s]"</span>
+text = <span class="str">"I can't stop thinking about U.S. foreign policy (2024)!"</span>
+tokens = re.findall(pattern, text)
+<span class="fn">print</span>(tokens)
+<span class="cm"># ['I', 'can', "'", 't', 'stop', 'thinking', 'about',
+#  'U', '.', 'S', '.', 'foreign', 'policy', '(', '2024', ')', '!']</span>
+
+<span class="cm"># Better: preserve contractions</span>
+pattern2 = <span class="str">r"[A-Za-z]+(?:'[a-z]+)?|\d+(?:\.\d+)?|[^\w\s]"</span>
+tokens2 = re.findall(pattern2, text)
+<span class="fn">print</span>(tokens2)
+<span class="cm"># ["I", "can't", "stop", "thinking", "about", "U", "S", "foreign", "policy", "2024", "!"]</span>
+</code></pre>
+
+  <h4>Strategy 3 — Rule-Based Tokenizer (NLTK TreebankWordTokenizer)</h4>
+  <p>Encodes a hand-crafted set of rules for English, handling apostrophes, hyphens, abbreviations, and
+  punctuation consistently.</p>
+  <pre><code><span class="kw">from</span> nltk.tokenize <span class="kw">import</span> TreebankWordTokenizer, word_tokenize
+
+tokenizer = TreebankWordTokenizer()
+text = <span class="str">"Don't you know Mr. Smith's theory? It costs $5.99!"</span>
+<span class="fn">print</span>(tokenizer.tokenize(text))
+<span class="cm"># ['Do', "n't", 'you', 'know', 'Mr.', 'Smith', "'s", 'theory', '?',
+#  'It', 'costs', '$', '5.99', '!']</span>
+</code></pre>
+
+  <h4>Strategy 4 — Character n-gram / Byte-Pair Encoding (BPE)</h4>
+  <p>Modern subword tokenization: not purely deterministic in the classic sense, but the <em>merge rules</em>
+  learned during training are applied deterministically at inference time.</p>
+  <pre><code><span class="cm"># BPE example (conceptual, as used in GPT-style models)
+# "unhappiness" might be tokenized as:
+# ["un", "happ", "iness"]  ← subword units
+# This solves the out-of-vocabulary (OOV) problem by
+# decomposing rare words into known subword pieces.</span>
+</code></pre>
+
+  <div class="box exam-tip">
+    <div class="box-title">🎯 Exam Tip — Tokenization Edge Cases</div>
+    <p>Examiners love edge cases. Be prepared to discuss:</p>
+    <ul>
+      <li><strong>Contractions:</strong> "don't" → ["do", "n't"] vs. ["don", "'", "t"] — different tokenizers disagree</li>
+      <li><strong>Hyphenated words:</strong> "state-of-the-art" — one token or four?</li>
+      <li><strong>Abbreviations:</strong> "U.S.A." — the trailing period is end-of-sentence or abbreviation marker?</li>
+      <li><strong>URLs &amp; email addresses:</strong> should <code>user@mail.com</code> be kept as one token?</li>
+      <li><strong>Multiword expressions:</strong> "New York" — two tokens or one named entity?</li>
+      <li><strong>Non-English scripts:</strong> Chinese and Japanese have no whitespace — require dictionary-based segmentation (e.g., Jieba for Chinese).</li>
+    </ul>
+  </div>
+
+  <hr class="section-divider" id="casefolding" />
+
+  <!-- 2b. CASE-FOLDING AND ITS LIMITS -->
+  <h3>2b. Case-Folding and Its Limits</h3>
+  <p>
+    Case-folding is the normalization of all characters in a text to a uniform case — almost always
+    lowercase — to eliminate spurious distinctions caused by capitalisation conventions rather than
+    semantic intent.
+  </p>
+
+  <div class="box definition">
+    <div class="box-title">📌 Definition</div>
+    <p>
+      <strong>Case-folding</strong> is a text normalization operation that maps every character in a
+      string to its lowercase equivalent using a deterministic character-level mapping, thereby
+      collapsing distinctions that arise solely from typographic or positional capitalisation
+      conventions (sentence-initial capitalisation, ALL-CAPS emphasis, etc.).
+    </p>
+  </div>
+
+<pre><code><span class="cm"># Python case-folding</span>
+text = <span class="str">"The PRESIDENT of the United States visited NASA HQ."</span>
+folded = text.lower()
+<span class="fn">print</span>(folded)
+<span class="cm"># "the president of the united states visited nasa hq."</span>
+
+<span class="cm"># Python's casefold() is more aggressive than lower() — handles Unicode better</span>
+<span class="fn">print</span>(<span class="str">"Straße"</span>.casefold())   <span class="cm"># → "strasse"  (German sharp-s → ss)</span>
+<span class="fn">print</span>(<span class="str">"Straße"</span>.lower())     <span class="cm"># → "straße"   (lower() keeps ß)</span>
+</code></pre>
+
+  <h4>Why Case-Folding Is Beneficial</h4>
+  <ul>
+    <li><strong>Vocabulary reduction:</strong> "The" and "the" are no longer two types — reduces vocabulary size (V) and data sparsity</li>
+    <li><strong>Consistent matching:</strong> A search for "london" retrieves "London" and "LONDON"</li>
+    <li><strong>Generalization:</strong> Models don't need extra parameters to represent capitalised duplicates</li>
+  </ul>
+
+  <div class="box example-box">
+    <div class="box-title">🧪 Example — Vocabulary Reduction Effect</div>
+    <p>In a typical English corpus, approximately <strong>5–10%</strong> of vocabulary types are
+    "case duplicates" — identical tokens differing only in capitalisation. For a vocabulary of 100,000 types,
+    case-folding can reduce this to ~90,000–95,000, meaningfully reducing model size and improving
+    the count estimates used in n-gram language models.</p>
+  </div>
+
+  <h4>⚠️ The Limits of Case-Folding</h4>
+  <p>Case-folding is not without significant dangers. In several important situations, capitalisation
+  is <em>semantically contrastive</em>, meaning that folding to lowercase <em>destroys information</em>.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Scenario</th><th>Original Form</th><th>After Case-Folding</th><th>Information Lost</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Proper Nouns vs. Common Nouns</td>
+          <td>"Turkey" (country) vs. "turkey" (bird)</td>
+          <td>both → "turkey"</td>
+          <td><span class="badge badge-red">Named entity boundary</span></td>
+        </tr>
+        <tr>
+          <td>Named Entity Recognition</td>
+          <td>"Apple" (company) vs. "apple" (fruit)</td>
+          <td>both → "apple"</td>
+          <td><span class="badge badge-red">Organisation vs. common noun</span></td>
+        </tr>
+        <tr>
+          <td>Acronyms</td>
+          <td>"IT" (Information Technology) vs. "it" (pronoun)</td>
+          <td>both → "it"</td>
+          <td><span class="badge badge-red">Acronym identity</span></td>
+        </tr>
+        <tr>
+          <td>Scientific terminology</td>
+          <td>"AIDS" (disease) vs. "aids" (verb, helps)</td>
+          <td>both → "aids"</td>
+          <td><span class="badge badge-red">Medical term vs. verb</span></td>
+        </tr>
+        <tr>
+          <td>Sentiment emphasis</td>
+          <td>"I LOVE this!" vs. "I love this!"</td>
+          <td>identical after folding</td>
+          <td><span class="badge badge-gold">Intensity signal</span></td>
+        </tr>
+        <tr>
+          <td>Social media discourse</td>
+          <td>"#MeToo" vs. "#metoo"</td>
+          <td>both → "#metoo"</td>
+          <td><span class="badge badge-blue">Hashtag convention</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="box warning-box">
+    <div class="box-title">⚠️ Critical Limitation for NER Systems</div>
+    <p>
+      In Named Entity Recognition (NER) and Information Extraction tasks, case information is a
+      <em>primary feature</em>. Capitalisation in English strongly correlates with proper-noun status.
+      Applying case-folding before NER will substantially degrade model performance.
+      The general principle: <strong>apply case-folding only when the downstream task does not require
+      distinction between proper and common nouns.</strong>
+    </p>
+  </div>
+
+  <div class="box prof-note">
+    <div class="box-title">📖 Professor's Note — When to (Not) Case-Fold</div>
+    <p>
+      The decision to case-fold must be task-driven. For information retrieval and bag-of-words
+      classification tasks, case-folding is almost always beneficial. For NER, co-reference
+      resolution, machine translation, and sentiment analysis, preserve case information as a feature.
+      In modern transformer-based models, the tokenizer is trained on cased text and handles this
+      automatically — but understanding the underlying trade-off is essential for system design.
+    </p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     TOPIC 3 · STEMMING VS LEMMATIZATION
+════════════════════════════════════════════════════ -->
+<section class="section" id="topic3" data-section="§3">
+  <span class="section-label label-teal">Topic 3</span>
+  <h2>Stemming vs. Lemmatization</h2>
+
+  <p>
+    Both stemming and lemmatization are morphological normalization techniques whose goal is the same:
+    reduce different surface forms of a word to a single canonical form, thereby collapsing inflectional
+    variation and improving matching. However, they differ fundamentally in their approach, linguistic
+    sophistication, and the quality of the canonical form they produce.
+  </p>
+
+  <div class="box definition">
+    <div class="box-title">📌 Definitions</div>
+    <p>
+      <strong>Stemming:</strong> A heuristic process that chops or modifies the suffix of a word
+      using a set of simple string-transformation rules, producing a <em>stem</em> — a truncated,
+      often non-standard form that is not necessarily a valid dictionary word.
+    </p>
+    <p class="mb-0">
+      <strong>Lemmatization:</strong> A linguistically informed process that reduces a word form to
+      its canonical dictionary form — its <em>lemma</em> — through morphological analysis and
+      vocabulary lookup, always producing a valid word.
+    </p>
+  </div>
+
+  <hr class="section-divider" id="porter" />
+
+  <!-- 3a. PORTER STEMMER -->
+  <h3>3a. The Porter Stemmer — Rules and Mechanics</h3>
+  <p>
+    The Porter Stemmer (Martin Porter, 1980) is the most widely studied and used English stemmer.
+    It applies a cascade of string-transformation rules in five sequential phases (Steps 1a, 1b, 1c, 2, 3, 4, 5a, 5b).
+    Each step is applied in order; the first matching rule in each step fires and the remaining rules are skipped.
+  </p>
+
+  <div class="box definition">
+    <div class="box-title">📌 The Measure (m) — Core Concept of the Porter Stemmer</div>
+    <p>The Porter Stemmer introduces a formal notion of <strong>word measure</strong>, denoted <em>m</em>,
+    which counts the number of vowel-consonant sequences in the stem preceding the suffix being removed.</p>
+    <p>Let <code>C</code> = one or more consonants, <code>V</code> = one or more vowels. Then:</p>
+    <p><code>[C] (VC)^m [V]</code> defines a word with measure <em>m</em>.</p>
+    <p><strong>Examples:</strong> "tree" → m=0; "trouble" → m=1; "oaten" → m=1; "troubles" → m=1; "private" → m=2</p>
+  </div>
+
+  <h4>Porter Stemmer — Key Rules by Step</h4>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Step</th><th>Condition</th><th>Rule (suffix → replacement)</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>1a</td><td>–</td><td>sses → ss</td><td>caresses → caress</td></tr>
+        <tr><td>1a</td><td>–</td><td>ies → i</td><td>ponies → poni</td></tr>
+        <tr><td>1a</td><td>–</td><td>ss → ss</td><td>caress → caress</td></tr>
+        <tr><td>1a</td><td>–</td><td>s → (delete)</td><td>cats → cat</td></tr>
+        <tr><td>1b</td><td>(m&gt;0)</td><td>eed → ee</td><td>agreed → agree</td></tr>
+        <tr><td>1b</td><td>(*v*)</td><td>ed → (delete)</td><td>plastered → plaster</td></tr>
+        <tr><td>1b</td><td>(*v*)</td><td>ing → (delete)</td><td>motoring → motor</td></tr>
+        <tr><td>1c</td><td>(*v*)</td><td>y → i</td><td>happy → happi</td></tr>
+        <tr><td>2</td><td>(m&gt;0)</td><td>ational → ate</td><td>relational → relate</td></tr>
+        <tr><td>2</td><td>(m&gt;0)</td><td>izer → ize</td><td>digitizer → digitize</td></tr>
+        <tr><td>2</td><td>(m&gt;0)</td><td>alism → al</td><td>conformalism → conformal</td></tr>
+        <tr><td>3</td><td>(m&gt;0)</td><td>icate → ic</td><td>triplicate → triplic</td></tr>
+        <tr><td>3</td><td>(m&gt;0)</td><td>ful → (delete)</td><td>hopeful → hope</td></tr>
+        <tr><td>4</td><td>(m&gt;1)</td><td>al → (delete)</td><td>revival → reviv</td></tr>
+        <tr><td>4</td><td>(m&gt;1)</td><td>ance → (delete)</td><td>allowance → allow</td></tr>
+        <tr><td>4</td><td>(m&gt;1)</td><td>ness → (delete)</td><td>goodness → good</td></tr>
+        <tr><td>5a</td><td>(m&gt;1)</td><td>e → (delete)</td><td>probate → probat</td></tr>
+        <tr><td>5b</td><td>(m=1 and not *o)</td><td>e → (delete)</td><td>cease → ceas</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <pre><code><span class="kw">from</span> nltk.stem <span class="kw">import</span> PorterStemmer, SnowballStemmer
+
+ps = PorterStemmer()
+ss = SnowballStemmer(<span class="str">"english"</span>)
+
+words = [<span class="str">"studies"</span>, <span class="str">"studying"</span>, <span class="str">"studied"</span>, <span class="str">"running"</span>, <span class="str">"happiness"</span>,
+         <span class="str">"generalization"</span>, <span class="str">"troubled"</span>, <span class="str">"caresses"</span>]
+
+<span class="fn">print</span>(<span class="str">f"{'Word':20} {'Porter':15} {'Snowball':15}"</span>)
+<span class="fn">print</span>(<span class="str">"-"</span> * <span class="num">50</span>)
+<span class="kw">for</span> w <span class="kw">in</span> words:
+    <span class="fn">print</span>(<span class="str">f"{w:20} {ps.stem(w):15} {ss.stem(w):15}"</span>)
+
+<span class="cm"># Word                 Porter          Snowball
+# studies              studi           studi
+# studying             studi           studi
+# studied              studi           studi
+# running              run             run
+# happiness            happi           happi
+# generalization       gener           general
+# troubled             troubl          troubl
+# caresses             caress          caress</span>
+</code></pre>
+
+  <div class="box warning-box">
+    <div class="box-title">⚠️ Known Pathologies of the Porter Stemmer</div>
+    <p><strong>Overstemming:</strong> different words collapse to the same stem (conflation errors)</p>
+    <ul>
+      <li>"generalizing" and "general" → both stem to "general" (correct)</li>
+      <li>"university" and "universe" → both stem to "univers" (incorrect — different meanings!)</li>
+    </ul>
+    <p><strong>Understemming:</strong> related forms are not collapsed to the same stem</p>
+    <ul>
+      <li>"alumnus", "alumni" → stemmed to "alumnus" and "alumni" (not normalized!)</li>
+    </ul>
+  </div>
+
+  <hr class="section-divider" id="wordnet" />
+
+  <!-- 3b. WORDNET LEMMATIZATION -->
+  <h3>3b. WordNet Morphological Analysis &amp; Lemmatization</h3>
+  <p>
+    WordNet (George Miller et al., Princeton, 1985–) is a large-scale lexical database for English.
+    It groups words into sets of synonyms called <em>synsets</em>, each representing a distinct lexical
+    concept, and records semantic relations among synsets (hypernymy, hyponymy, meronymy, antonymy).
+  </p>
+
+  <div class="box definition">
+    <div class="box-title">📌 Definition — Lemma</div>
+    <p>
+      A <strong>lemma</strong> is the canonical, citation, or base form of a word as it would appear in a
+      dictionary: the infinitive form of verbs ("run" not "running"), the singular form of nouns
+      ("mouse" not "mice"), and the positive degree of adjectives ("good" not "better" or "best").
+    </p>
+  </div>
+
+  <h4>How WordNet Lemmatization Works</h4>
+  <ol class="steps">
+    <li><p><strong>POS tagging:</strong> The input word form is tagged with its part of speech (NN, VBG, JJ, etc.).</p></li>
+    <li><p><strong>Morphological exception lookup:</strong> The (word, POS) pair is looked up in WordNet's exception lists — hand-curated tables of irregular forms (e.g., "mice → mouse", "went → go", "better → good").</p></li>
+    <li><p><strong>Algorithmic detachment:</strong> If no exception match is found, a set of ordered detachment rules is applied to the suffix based on the POS tag to produce candidate stems.</p></li>
+    <li><p><strong>Vocabulary validation:</strong> Each candidate stem is checked against the WordNet lexicon. Only valid dictionary words are returned.</p></li>
+    <li><p><strong>Lemma returned:</strong> The first valid base form found is returned as the lemma.</p></li>
+  </ol>
+
+  <pre><code><span class="kw">from</span> nltk.stem <span class="kw">import</span> WordNetLemmatizer
+<span class="kw">from</span> nltk.corpus <span class="kw">import</span> wordnet
+
+wnl = WordNetLemmatizer()
+
+test_cases = [
+    (<span class="str">"runs"</span>,    <span class="str">"v"</span>),
+    (<span class="str">"running"</span>, <span class="str">"v"</span>),
+    (<span class="str">"ran"</span>,     <span class="str">"v"</span>),
+    (<span class="str">"mice"</span>,    <span class="str">"n"</span>),
+    (<span class="str">"geese"</span>,   <span class="str">"n"</span>),
+    (<span class="str">"better"</span>,  <span class="str">"a"</span>),   <span class="cm"># adjective</span>
+    (<span class="str">"best"</span>,    <span class="str">"a"</span>),
+    (<span class="str">"corpora"</span>, <span class="str">"n"</span>),
+    (<span class="str">"happily"</span>, <span class="str">"r"</span>),   <span class="cm"># adverb</span>
+]
+
+<span class="fn">print</span>(<span class="str">f"{'Word':12} {'POS':4} → {'Lemma':12}"</span>)
+<span class="fn">print</span>(<span class="str">"-"</span> * <span class="num">32</span>)
+<span class="kw">for</span> word, pos <span class="kw">in</span> test_cases:
+    lemma = wnl.lemmatize(word, pos=pos)
+    <span class="fn">print</span>(<span class="str">f"{word:12} {pos:4} → {lemma:12}"</span>)
+
+<span class="cm"># Word         POS  → Lemma
+# runs         v    → run
+# running      v    → run
+# ran          v    → run
+# mice         n    → mouse
+# geese        n    → goose
+# better       a    → good
+# best         a    → good
+# corpora      n    → corpus
+# happily      r    → happily   ← Note: adverb lemmatization is limited</span>
+</code></pre>
+
+  <div class="box example-box">
+    <div class="box-title">🧪 WordNet Synsets — Beyond Lemmatization</div>
+    <pre><code><span class="kw">from</span> nltk.corpus <span class="kw">import</span> wordnet <span class="kw">as</span> wn
+
+synsets = wn.synsets(<span class="str">"bank"</span>)
+<span class="kw">for</span> s <span class="kw">in</span> synsets[:<span class="num">3</span>]:
+    <span class="fn">print</span>(<span class="str">f"{s.name():25} → {s.definition()}"</span>)
+
+<span class="cm"># bank.n.01                → sloping land (especially the land alongside a body of water)
+# bank.n.02                → a financial institution that accepts deposits and channels money into lending
+# bank.n.03                → a long ridge or pile</span>
+</code></pre>
+  </div>
+
+  <hr class="section-divider" />
+
+  <!-- DETAILED COMPARISON TABLE -->
+  <h3>Stemming vs. Lemmatization — Detailed Comparison</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Dimension</th><th>Stemming (Porter)</th><th>Lemmatization (WordNet)</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Approach</td>
+          <td>Heuristic / rule-based suffix stripping</td>
+          <td>Lexicon-based morphological analysis</td>
+        </tr>
+        <tr>
+          <td>Output validity</td>
+          <td><span class="badge badge-red">Not always a valid word</span> ("studi", "happi")</td>
+          <td><span class="badge badge-green">Always a valid dictionary word</span> ("study", "happy")</td>
+        </tr>
+        <tr>
+          <td>POS required?</td>
+          <td><span class="badge badge-blue">No</span> — purely string-based</td>
+          <td><span class="badge badge-gold">Yes</span> — POS tag dramatically improves accuracy</td>
+        </tr>
+        <tr>
+          <td>Speed</td>
+          <td><span class="badge badge-green">Very fast</span> — O(1) per word (regex rules)</td>
+          <td><span class="badge badge-gold">Slower</span> — requires dictionary lookup</td>
+        </tr>
+        <tr>
+          <td>Linguistic accuracy</td>
+          <td><span class="badge badge-red">Low to moderate</span> — overstemming &amp; understemming</td>
+          <td><span class="badge badge-green">High</span> — handles irregulars, superlatives, etc.</td>
+        </tr>
+        <tr>
+          <td>Language support</td>
+          <td>Snowball supports 13+ languages</td>
+          <td>WordNet primarily English; multilingual alternatives exist (UWN)</td>
+        </tr>
+        <tr>
+          <td>Handles irregulars?</td>
+          <td><span class="badge badge-red">No</span> ("went" → "went", not "go")</td>
+          <td><span class="badge badge-green">Yes</span> ("went" → "go", "mice" → "mouse")</td>
+        </tr>
+        <tr>
+          <td>Memory requirement</td>
+          <td><span class="badge badge-green">Minimal</span> — rules only</td>
+          <td><span class="badge badge-gold">Moderate</span> — requires lexical database</td>
+        </tr>
+        <tr>
+          <td>Best used for</td>
+          <td>Information retrieval, search indexing, spam filtering</td>
+          <td>Machine translation, Q&amp;A, chatbots, text generation</td>
+        </tr>
+        <tr>
+          <td>Example: "studies"</td>
+          <td>→ "studi"</td>
+          <td>→ "study"</td>
+        </tr>
+        <tr>
+          <td>Example: "better"</td>
+          <td>→ "better" (unchanged)</td>
+          <td>→ "good" (correct lemma)</td>
+        </tr>
+        <tr>
+          <td>Example: "running"</td>
+          <td>→ "run"</td>
+          <td>→ "run" (with POS=verb)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="box prof-note">
+    <div class="box-title">📖 Professor's Note — Choosing Between Them</div>
+    <p>
+      The choice is fundamentally a <strong>precision-speed trade-off</strong>. If you are building
+      a large-scale search engine that indexes millions of documents in real time, the raw throughput
+      advantage of stemming is often decisive. If you are building a medical record extraction system,
+      a chatbot, or any application where a non-word output would propagate errors downstream,
+      lemmatization is the correct choice. In modern deep-learning NLP pipelines (BERT, GPT), neither
+      is applied — subword tokenization (BPE, WordPiece) replaces both — but understanding them is
+      essential for classical NLP and for interpreting legacy systems.
+    </p>
+  </div>
+
+  <div class="box exam-tip">
+    <div class="box-title">🎯 Exam Tip</div>
+    <p>A classic exam question: <em>"Apply the Porter Stemmer to the word 'generalizing' and show each step."</em> Practice tracing through the steps manually. Also be ready to contrast specific examples where stemming fails but lemmatization succeeds, especially with irregular forms.</p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     TOPIC 4 · STOP-WORD FILTRATION
+════════════════════════════════════════════════════ -->
+<section class="section" id="topic4" data-section="§4">
+  <span class="section-label label-rose">Topic 4</span>
+  <h2>Stop-Word Filtration</h2>
+
+  <p>
+    Stop-word filtration is a text preprocessing technique that removes a predefined set of highly
+    frequent, semantically weak function words from a text before further processing.
+    The intuition is straightforward: words like "the", "is", "at", "which", and "on" appear in
+    almost every document and carry little discriminative power for most tasks.
+  </p>
+
+  <div class="box definition">
+    <div class="box-title">📌 Definition</div>
+    <p>
+      <strong>Stop words</strong> are a set of commonly occurring words in a language that are
+      typically removed before a text is processed in natural language processing tasks, because
+      they carry minimal semantic information and high frequency renders them uninformative for
+      tasks such as document classification, information retrieval, and topic modelling.
+    </p>
+  </div>
+
+  <div class="box example-box">
+    <div class="box-title">🧪 Example — What Stop Words Look Like</div>
+    <p>NLTK English stop-word list (subset): <code>a, an, the, is, are, was, were, be, been, being, have, has, had, do, does, did, will, would, could, should, may, might, shall, must, can, that, this, these, those, i, me, my, myself, we, our, you, your, he, she, it, they, them, his, her, its, their, at, by, for, in, of, on, to, with, about, after, before, between, during, from, into, through, under, until, up, about, against, among...</code></p>
+  </div>
+
+  <h3>The Mechanics of Stop-Word Filtration</h3>
+  <ol class="steps">
+    <li><p><strong>Tokenize</strong> the input text into a sequence of tokens.</p></li>
+    <li><p><strong>Load the stop-word list</strong> — either a standard list (NLTK, spaCy, Gensim) or a custom domain-specific list stored as a set for O(1) lookup.</p></li>
+    <li><p><strong>Filter:</strong> For each token, check membership in the stop-word set. Retain the token if it is NOT in the stop-word set.</p></li>
+    <li><p><strong>Reconstruct</strong> the filtered token sequence for downstream processing.</p></li>
+  </ol>
+
+  <pre><code><span class="kw">from</span> nltk.corpus <span class="kw">import</span> stopwords
+<span class="kw">from</span> nltk.tokenize <span class="kw">import</span> word_tokenize
+
+<span class="cm"># Load stop words as a set (O(1) lookup)</span>
+stop_words = set(stopwords.words(<span class="str">'english'</span>))
+
+text = <span class="str">"The researchers at the university discovered that machine learning models perform well on large datasets."</span>
+tokens = word_tokenize(text.lower())
+
+<span class="cm"># Filter: keep only non-stop-words</span>
+filtered = [t <span class="kw">for</span> t <span class="kw">in</span> tokens <span class="kw">if</span> t <span class="op">not</span> <span class="kw">in</span> stop_words <span class="op">and</span> t.isalpha()]
+
+<span class="fn">print</span>(<span class="str">"Original:"</span>,  tokens)
+<span class="fn">print</span>(<span class="str">"Filtered:"</span>,  filtered)
+<span class="fn">print</span>(<span class="str">f"Reduction: {len(tokens)} → {len(filtered)} tokens ({(len(tokens)-len(filtered))/len(tokens)*100:.0f}% removed)"</span>)
+
+<span class="cm"># Original: ['the', 'researchers', 'at', 'the', 'university', 'discovered', 'that',
+#             'machine', 'learning', 'models', 'perform', 'well', 'on', 'large', 'datasets', '.']
+# Filtered: ['researchers', 'university', 'discovered', 'machine', 'learning',
+#             'models', 'perform', 'well', 'large', 'datasets']
+# Reduction: 16 → 10 tokens (37% removed)</span>
+</code></pre>
+
+  <h3>Rules and Regularization of Stop-Word Lists</h3>
+  <p>
+    There is no universal stop-word list — the "correct" list depends on the domain, language, and task.
+    Several principles govern their construction:
+  </p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Principle</th><th>Explanation</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Frequency-based</td>
+          <td>Words above a corpus-specific frequency threshold are treated as stop words (e.g., top 1% by TF)</td>
+          <td>"the" appears in ~90% of English documents</td>
+        </tr>
+        <tr>
+          <td>Low IDF</td>
+          <td>Words with very low Inverse Document Frequency are removed (they appear in too many documents to be discriminative)</td>
+          <td>IDF("the") ≈ 0 across any large corpus</td>
+        </tr>
+        <tr>
+          <td>POS-based</td>
+          <td>Remove all determiners (DT), prepositions (IN), conjunctions (CC), and pronouns (PRP) by default</td>
+          <td>"a", "an", "the", "of", "in", "and", "but"</td>
+        </tr>
+        <tr>
+          <td>Domain-specific extension</td>
+          <td>Add domain-frequent terms that are non-discriminative within the domain (e.g., "patient", "hospital" in a medical corpus)</td>
+          <td>In medical NLP: "patient" may be added to stop list</td>
+        </tr>
+        <tr>
+          <td>Hand-curated lists</td>
+          <td>Expert linguists manually review and curate, balancing recall and specificity</td>
+          <td>NLTK: 179 English stops; spaCy: ~326 by default</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Advantages of Stop-Word Filtration</h3>
+  <ul>
+    <li><strong>Dimensionality reduction:</strong> Reduces feature space significantly (often 30–50% of tokens are stop words), making models faster and more memory-efficient.</li>
+    <li><strong>Noise reduction:</strong> Removes tokens that add noise without adding signal for classification, clustering, or retrieval tasks.</li>
+    <li><strong>Improved TF-IDF performance:</strong> Stops words would otherwise dominate term-frequency scores; removing them allows content words to dominate.</li>
+    <li><strong>Computational efficiency:</strong> Smaller vocabulary → smaller matrices in Bag-of-Words and TF-IDF models, faster training.</li>
+    <li><strong>Better topic modeling:</strong> LDA and other topic models produce more interpretable topics when stop words are removed.</li>
+  </ul>
+
+  <h3>Limitations and Dangers of Stop-Word Filtration</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Limitation</th><th>Explanation</th><th>Task Affected</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Semantic negation loss</td>
+          <td>"not good" → "good" after removing "not" — completely reverses meaning</td>
+          <td><span class="badge badge-red">Sentiment Analysis</span></td>
+        </tr>
+        <tr>
+          <td>Question type loss</td>
+          <td>Removing "who", "what", "where", "when", "why", "how" destroys intent signals</td>
+          <td><span class="badge badge-red">QA, Intent Detection</span></td>
+        </tr>
+        <tr>
+          <td>Named entity fragmentation</td>
+          <td>"The Who" (band name) → "Who" or nothing; "to be or not to be" → empty</td>
+          <td><span class="badge badge-red">NER, Literary Analysis</span></td>
+        </tr>
+        <tr>
+          <td>Discourse coherence</td>
+          <td>Connectives ("however", "therefore", "although") signal logical relations between clauses</td>
+          <td><span class="badge badge-red">Discourse Analysis, Summarization</span></td>
+        </tr>
+        <tr>
+          <td>Language model perplexity</td>
+          <td>LMs require natural language including function words; remove them and fluency collapses</td>
+          <td><span class="badge badge-red">Language Generation</span></td>
+        </tr>
+        <tr>
+          <td>Cross-lingual issues</td>
+          <td>Stop-word lists are language-specific; applying an English list to another language is harmful</td>
+          <td><span class="badge badge-gold">Multilingual NLP</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="box example-box">
+    <div class="box-title">🧪 Classic Failure Case — Sentiment Reversal</div>
+    <pre><code>text_pos = <span class="str">"The movie is not bad at all."</span>
+text_neg = <span class="str">"The movie is bad."</span>
+
+<span class="cm"># After stop word removal + stemming:</span>
+filtered_pos = [<span class="str">"movi"</span>, <span class="str">"bad"</span>]    <span class="cm"># "not" removed! Appears negative!</span>
+filtered_neg = [<span class="str">"movi"</span>, <span class="str">"bad"</span>]    <span class="cm"># Identical representation!</span>
+
+<span class="cm"># A bag-of-words model sees these as IDENTICAL sentences.
+# This is a fundamental problem for negation-sensitive tasks.</span>
+</code></pre>
+    <p>This illustrates why modern sentiment analysis systems either retain negation markers or
+    use n-gram features that preserve local context ("not_bad" as a bigram feature).</p>
+  </div>
+
+  <div class="box prof-note">
+    <div class="box-title">📖 Professor's Note — The Task-Dependency Principle</div>
+    <p>
+      A central lesson of NLP preprocessing: <strong>there is no universally correct preprocessing strategy</strong>.
+      Every preprocessing decision — whether to case-fold, whether to stem or lemmatize, whether to remove
+      stop words — must be evaluated against the target task. In modern deep-learning NLP, many of these
+      decisions are made implicitly by the tokenizer and the model architecture. But in classical ML-based
+      NLP (SVM, Naive Bayes, logistic regression on BoW features), these choices dominate performance.
+      Understanding them is essential for both exam success and real-world system design.
+    </p>
+  </div>
+
+  <div class="box exam-tip">
+    <div class="box-title">🎯 Exam Tip — Stop Words and Task Context</div>
+    <p>Examiners frequently ask: <em>"Should stop words be removed for task X? Justify your answer."</em>
+    Always answer with reference to:</p>
+    <ul>
+      <li>Whether function words carry task-relevant information (negation, discourse, question type)</li>
+      <li>Whether the model architecture already handles high-frequency words (e.g., TF-IDF downweights them automatically)</li>
+      <li>Whether the vocabulary size constraint justifies the information loss</li>
+    </ul>
+    <p>For <strong>IR / text classification / topic modelling</strong>: usually remove. For
+    <strong>sentiment, QA, NMT, dialogue</strong>: usually retain.</p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     KEY TAKEAWAYS
+════════════════════════════════════════════════════ -->
+<section class="section" id="takeaways" data-section="★">
+  <span class="section-label label-green">Summary</span>
+  <h2>Key Takeaways</h2>
+  <div class="takeaway-grid">
+    <div class="takeaway-card">
+      <h4>NLP Pipeline</h4>
+      <p>Processing moves through morphological → syntactic → semantic layers. Error propagation is the core challenge of cascaded pipelines.</p>
+    </div>
+    <div class="takeaway-card">
+      <h4>Morphological Analysis</h4>
+      <p>Decomposes words into morphemes. Enables stemming, lemmatization, and POS tagging. Critical for morphologically rich languages.</p>
+    </div>
+    <div class="takeaway-card">
+      <h4>Syntactic Analysis</h4>
+      <p>Two paradigms: constituency (phrase structure trees) and dependency (typed binary relations). Syntactic ambiguity is a key challenge.</p>
+    </div>
+    <div class="takeaway-card">
+      <h4>Semantic Analysis</h4>
+      <p>Operates at lexical (WSD), sentential (SRL), and discourse (co-reference) levels. Syntax ≠ semantics — "colorless green ideas" is proof.</p>
+    </div>
+    <div class="takeaway-card">
+      <h4>Tokenization</h4>
+      <p>Deterministic strategies range from whitespace splitting to regex and rule-based approaches. Edge cases (contractions, abbreviations) require explicit handling.</p>
+    </div>
+    <div class="takeaway-card">
+      <h4>Case-Folding</h4>
+      <p>Reduces vocabulary by collapsing case variants. Harmful for NER, acronym disambiguation, and any task requiring proper noun detection.</p>
+    </div>
+    <div class="takeaway-card">
+      <h4>Porter Stemmer</h4>
+      <p>5-step heuristic suffix stripper. Fast, simple, but produces non-words. Overstemming and understemming are its primary failure modes.</p>
+    </div>
+    <div class="takeaway-card">
+      <h4>Lemmatization</h4>
+      <p>Lexicon-based, POS-aware. Always returns valid dictionary words. Handles irregulars ("mice→mouse"). Slower but more accurate than stemming.</p>
+    </div>
+    <div class="takeaway-card">
+      <h4>Stop-Word Filtration</h4>
+      <p>Removes high-frequency, low-information function words. Great for IR and topic modelling. Dangerous for sentiment (negation) and QA (question words).</p>
+    </div>
+    <div class="takeaway-card">
+      <h4>The Core Principle</h4>
+      <p>Every preprocessing choice is task-dependent. No universal strategy exists. Always ask: "Does this preprocessing preserve the information my task requires?"</p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     QUICK REVISION
+════════════════════════════════════════════════════ -->
+<section class="section" id="revision" data-section="✓">
+  <span class="section-label label-blue">Revision</span>
+  <h2>Quick Revision Notes</h2>
+  <ul class="revision-list">
+    <li>The NLP pipeline transforms raw text through morphological, syntactic, and semantic layers sequentially.</li>
+    <li>A morpheme is the smallest meaningful unit of language; inflection changes form, derivation changes meaning/category.</li>
+    <li>Constituency parsing produces hierarchical phrase trees (S→NP VP); dependency parsing produces typed word-pair graphs.</li>
+    <li>"Colorless green ideas sleep furiously" — syntactically valid but semantically nonsensical. Levels are distinct.</li>
+    <li>Tokenization must handle contractions, abbreviations, hyphens, URLs, and non-whitespace-delimited languages.</li>
+    <li>Python's <code>casefold()</code> is preferred over <code>lower()</code> for Unicode-correct case folding (e.g., German ß → ss).</li>
+    <li>Case-folding collapses "Turkey" (country) and "turkey" (bird) — destroys named entity boundaries.</li>
+    <li>Porter Stemmer uses word measure m to condition rules. Steps 1a→1b→1c→2→3→4→5a→5b in order.</li>
+    <li>Stemming produces stems (possibly non-words); lemmatization produces lemmas (always valid dictionary words).</li>
+    <li>Lemmatization requires POS tag for correct results: "better" + ADJ → "good"; "better" + VERB → "better".</li>
+    <li>WordNet is organized into synsets (synonym sets) with semantic relations: hypernymy, hyponymy, meronymy, antonymy.</li>
+    <li>Stop-word removal: 30–50% token reduction, but "not bad" → "bad" after removing "not" — sentiment reversal!</li>
+    <li>NLTK has 179 English stop words; spaCy has ~326; always consider domain-specific additions.</li>
+    <li>TF-IDF naturally downweights high-frequency terms — stop-word removal may be redundant with TF-IDF models.</li>
+    <li>Modern LLMs (BERT, GPT) use subword tokenization (BPE/WordPiece) — neither stemming nor stop-word removal is applied.</li>
+    <li>Error propagation: mistakes at tokenization level cascade and amplify through every downstream pipeline stage.</li>
+  </ul>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     COMMON MISTAKES
+════════════════════════════════════════════════════ -->
+<section class="section" data-section="!">
+  <span class="section-label label-rose">Common Mistakes</span>
+  <h2>Common Misconceptions &amp; Mistakes</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Misconception</th><th>Reality</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>"Stemming and lemmatization are the same thing"</td>
+          <td>Stemming is heuristic suffix stripping; lemmatization is linguistically informed dictionary lookup. They produce different outputs and are suited to different tasks.</td>
+        </tr>
+        <tr>
+          <td>"Always remove stop words for better performance"</td>
+          <td>Stop-word removal destroys critical information for sentiment analysis (negation), QA (question words), and discourse tasks. It is task-dependent.</td>
+        </tr>
+        <tr>
+          <td>"Case-folding is always safe"</td>
+          <td>Case-folding conflates proper nouns with common nouns (Turkey/turkey, Apple/apple) and destroys acronym identity (IT/it). It is harmful for NER.</td>
+        </tr>
+        <tr>
+          <td>"Syntax and semantics are the same level"</td>
+          <td>Syntax is about grammatical structure; semantics is about meaning. A sentence can be syntactically correct but semantically anomalous, and vice versa.</td>
+        </tr>
+        <tr>
+          <td>"The Porter Stemmer outputs valid English words"</td>
+          <td>The Porter Stemmer regularly produces non-words: "studies" → "studi", "happiness" → "happi". These are stems, not lemmas.</td>
+        </tr>
+        <tr>
+          <td>"Tokenization is trivial — just split on spaces"</td>
+          <td>Whitespace tokenization fails badly on contractions, abbreviations, numbers, URLs, multilingual text, and punctuation. Robust tokenization requires explicit rule handling.</td>
+        </tr>
+        <tr>
+          <td>"Lemmatization doesn't need POS tags"</td>
+          <td>Without POS tags, WordNet defaults to treating all words as nouns, severely degrading lemmatization quality for verbs and adjectives.</td>
+        </tr>
+        <tr>
+          <td>"Morphological analysis is irrelevant for deep learning"</td>
+          <td>While neural models encode morphology implicitly, understanding morphological analysis is essential for interpreting model behaviour, diagnosing failures, and working in low-resource or morphologically complex languages.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     PRACTICAL APPLICATIONS
+════════════════════════════════════════════════════ -->
+<section class="section" data-section="⚙">
+  <span class="section-label label-teal">Applications</span>
+  <h2>Practical Applications in Real-World Systems</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>NLP Concept</th><th>System / Product</th><th>How It's Used</th></tr></thead>
+      <tbody>
+        <tr><td>Morphological Analysis</td><td>Google Search</td><td>Query expansion — "running shoe" retrieves "run", "runner", "ran" variants</td></tr>
+        <tr><td>Syntactic Analysis</td><td>Grammarly, MS Word</td><td>Parse trees identify grammatical errors, subject-verb agreement, misplaced modifiers</td></tr>
+        <tr><td>Semantic Analysis</td><td>Amazon Alexa, Siri</td><td>SRL identifies who/what/where/when in voice commands to extract intent and entities</td></tr>
+        <tr><td>Tokenization</td><td>BERT, GPT models</td><td>WordPiece/BPE tokenizers split text into subword tokens for the embedding layer</td></tr>
+        <tr><td>Case-folding</td><td>Elasticsearch</td><td>Case-insensitive search index maps "Apple", "APPLE", "apple" to the same posting list</td></tr>
+        <tr><td>Porter Stemming</td><td>Apache Lucene / Solr</td><td>Stemming of index terms and query terms enables recall-oriented document retrieval</td></tr>
+        <tr><td>Lemmatization</td><td>Legal document systems</td><td>Precise matching of case law where "ran" must match "run" but form must be valid</td></tr>
+        <tr><td>Stop-word removal</td><td>LDA topic modelling</td><td>Removes high-frequency function words so topic distributions reflect content words</td></tr>
+        <tr><td>Full pipeline</td><td>IBM Watson NLU</td><td>Raw text → tokenize → lemmatize → POS tag → parse → semantic roles → entities</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     CONCLUSION
+════════════════════════════════════════════════════ -->
+<div class="conclusion-banner" id="conclusion">
+  <h2>Conclusion</h2>
+  <p>
+    Text preprocessing and linguistic analysis are not auxiliary concerns — they are the foundation
+    upon which every NLP system is built. Mastering the NLP pipeline, text normalization, morphological
+    reduction, and stop-word strategies equips you not only to pass your examinations, but to reason
+    rigorously about system design, failure analysis, and the inherent trade-offs of working with
+    human language in computational systems.
+  </p>
+  <p style="margin-top:.9rem; font-size:.85rem; color:rgba(255,255,255,.5)">
+    These notes are intended as a comprehensive study resource. Always supplement with primary texts:
+    Jurafsky &amp; Martin "Speech and Language Processing" (3rd ed.) and Manning et al. "Introduction to Information Retrieval."
+  </p>
+</div>
+
+</main>
+
+<!-- Smooth back-to-top awareness -->
+<script>
+  // Highlight current section in TOC on scroll
+  const sections = document.querySelectorAll('[id]');
+  const tocLinks = document.querySelectorAll('.toc-item');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        tocLinks.forEach(l => l.style.background = '');
+        const active = document.querySelector(`.toc-item[href="#${entry.target.id}"]`);
+        if (active) active.style.background = '#e6f0fb';
+      }
+    });
+  }, { threshold: 0.4 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
